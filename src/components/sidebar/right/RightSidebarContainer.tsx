@@ -131,7 +131,7 @@ export const RightSidebarContainer: React.FC<RightSidebarContainerProps> = ({
         className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-150"
         onClick={handleBackdropClick}
       />
-      <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] w-full rounded-t-3xl border-t border-slate-200 dark:border-slate-800 lg:inset-y-0 lg:left-auto lg:right-0 lg:bottom-auto lg:h-full lg:max-h-none lg:w-80 lg:rounded-none lg:border-t-0 lg:border-l bg-white dark:bg-slate-900 flex flex-col shadow-2xl lg:shadow-lg shrink-0 transition-all animate-in slide-in-from-bottom lg:slide-in-from-right duration-200 overflow-hidden">
+      <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] w-full rounded-t-3xl border-t border-slate-200 dark:border-slate-800 lg:relative lg:inset-auto lg:h-full lg:max-h-none lg:w-80 lg:rounded-none lg:border-t-0 lg:border-l lg:shadow-none bg-white dark:bg-slate-900 flex flex-col shadow-2xl shrink-0 transition-all animate-in slide-in-from-bottom lg:slide-in-from-right duration-200 overflow-hidden">
         {/* Mobile handle indicator */}
         <div className="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto my-2.5 lg:hidden shrink-0" />
       {activeTab === 'inspector' && (
