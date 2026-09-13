@@ -40,6 +40,7 @@ import { MetadataModal } from './components/modals/MetadataModal';
 import { CompressModal } from './components/modals/CompressModal';
 import { MobileToolsModal } from './components/modals/MobileToolsModal';
 import { MobileBottomBar } from './components/layout/MobileBottomBar';
+import { MobileDrawToolbar } from './components/layout/MobileDrawToolbar';
 import { useResponsive } from './hooks/useResponsive';
 import { encryptPDF } from '@pdfsmaller/pdf-encrypt';
 import { decryptPDF, isEncrypted as checkIsPdfEncrypted } from '@pdfsmaller/pdf-decrypt';
@@ -2015,6 +2016,31 @@ export const App: React.FC = () => {
         title={alertConfig.title}
         message={alertConfig.message}
         type={alertConfig.type}
+      />
+
+      {/* Mobile Draw Toolbar for Pen Color, Stroke, Undo, Clear (Emerges from bottom) */}
+      <MobileDrawToolbar
+        isOpen={isMobile && !!pdfDoc && toolMode === 'draw'}
+        color={color}
+        strokeWidth={strokeWidth}
+        onColorChange={setColor}
+        onStrokeWidthChange={setStrokeWidth}
+        onUndoStroke={() => {
+          setDrawingAnnotations((prev) => {
+            const pageIndices = prev
+              .map((d, i) => (d.pageIndex === currentPageIndex ? i : -1))
+              .filter((i) => i !== -1);
+            if (pageIndices.length === 0) return prev;
+            const lastIdx = pageIndices[pageIndices.length - 1];
+            return prev.filter((_, i) => i !== lastIdx);
+          });
+        }}
+        onClearStrokes={() => {
+          setDrawingAnnotations((prev) => prev.filter((d) => d.pageIndex !== currentPageIndex));
+        }}
+        onClose={() => setToolMode('select')}
+        canUndo={drawingAnnotations.some((d) => d.pageIndex === currentPageIndex)}
+        language={settings.language}
       />
 
       {/* Mobile Bottom Navigation Bar (< 768px) */}

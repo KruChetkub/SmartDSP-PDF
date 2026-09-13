@@ -744,10 +744,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     const currentY = (touch.clientY - rect.top) / zoom;
 
     if (isDrawing && toolMode === 'draw') {
-      if (e.cancelable) e.preventDefault();
       setCurrentStroke((prev) => [...prev, { x: currentX, y: currentY }]);
     } else if (shapeStart) {
-      if (e.cancelable) e.preventDefault();
       setShapeCurrent({ x: currentX, y: currentY });
     }
   };
@@ -858,7 +856,16 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         onTouchStart={handleOverlayTouchStart}
         onTouchMove={handleOverlayTouchMove}
         onTouchEnd={handleOverlayTouchEnd}
-        className="relative bg-white shadow-xl dark:shadow-2xl dark:shadow-black/60 rounded-sm transition-transform duration-75 origin-top"
+        className={`relative bg-white shadow-xl dark:shadow-2xl dark:shadow-black/60 rounded-sm transition-transform duration-75 origin-top ${
+          toolMode === 'draw' ||
+          toolMode === 'rect' ||
+          toolMode === 'circle' ||
+          toolMode === 'line' ||
+          toolMode === 'arrow' ||
+          toolMode === 'redact'
+            ? 'touch-none select-none'
+            : ''
+        }`}
         style={{
           cursor:
             toolMode === 'pan'
