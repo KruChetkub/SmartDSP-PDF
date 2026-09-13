@@ -119,19 +119,86 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150 select-none">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-2 sm:p-4 z-50 animate-in fade-in duration-150 select-none">
       <div 
-        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
         onClick={() => {
           setIsLangOpen(false);
           setIsPaperSizeOpen(false);
           setIsDpiOpen(false);
         }}
       >
-        {/* Main Body: Two Columns */}
-        <div className="flex flex-1 overflow-hidden min-h-[460px]">
-          {/* Left Column: Sidebar Navigation */}
-          <div className="w-60 bg-[#fafafa] dark:bg-slate-950/50 border-r border-slate-200/80 dark:border-slate-800 p-5 flex flex-col justify-between shrink-0">
+        {/* Mobile Header (< md) */}
+        <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-slate-200/80 dark:border-slate-800 bg-[#fafafa] dark:bg-slate-950/50 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-pink-50 dark:bg-pink-950/60 border border-pink-100 dark:border-pink-900/40 text-pink-600 dark:text-pink-400">
+              <SettingsIcon className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-tight">
+                {t('settingsTitle', lang)}
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {t('settingsSubtitle', lang)}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mobile Tabs Bar (< md) */}
+        <div className="md:hidden flex items-center gap-1.5 p-2 bg-slate-100/60 dark:bg-slate-950/40 border-b border-slate-200/80 dark:border-slate-800 shrink-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab('general')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              activeTab === 'general'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60'
+            }`}
+          >
+            <SettingsIcon className="w-3.5 h-3.5 shrink-0" />
+            <span>{t('tabGeneral', lang)}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('theme')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              activeTab === 'theme'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60'
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5 shrink-0" />
+            <span>{t('tabTheme', lang)}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('advanced')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+              activeTab === 'advanced'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-semibold shadow-2xs border border-slate-200/60 dark:border-slate-700/60'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5 shrink-0" />
+            <span>{t('tabAdvanced', lang)}</span>
+          </button>
+        </div>
+
+        {/* Main Body: Two Columns on Desktop, Single column on Mobile */}
+        <div className="flex flex-1 overflow-hidden min-h-0 md:min-h-[460px]">
+          {/* Left Column: Sidebar Navigation (Desktop md+) */}
+          <div className="hidden md:flex w-60 bg-[#fafafa] dark:bg-slate-950/50 border-r border-slate-200/80 dark:border-slate-800 p-5 flex-col justify-between shrink-0">
             <div>
               {/* Header Title & Subtitle */}
               <div className="mb-6">
@@ -192,12 +259,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Right Column: Tab Content */}
-          <div className="flex-1 p-6 overflow-y-auto bg-white dark:bg-slate-900 relative">
-            {/* Close Button top right */}
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto bg-white dark:bg-slate-900 relative">
+            {/* Close Button top right (Desktop only) */}
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-5 right-5 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="hidden md:block absolute top-5 right-5 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -413,7 +480,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     {isPaperSizeOpen && (
                       <div
-                        className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden z-20 py-1"
+                        className="absolute left-0 right-0 top-full mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-56 overflow-y-auto z-20 py-1"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {(Object.keys(PAPER_SIZES) as PaperSize[]).map((key) => {
@@ -472,7 +539,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                     {isDpiOpen && (
                       <div
-                        className="absolute left-0 w-full sm:w-72 top-full mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg overflow-hidden z-20 py-1"
+                        className="absolute left-0 w-full sm:w-72 top-full mt-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-56 overflow-y-auto z-20 py-1"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {dpiOptions.map((opt) => (
@@ -499,7 +566,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="pt-2">
                   <div
                     onClick={handleToggleLatinSpacing}
-                    className="p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/40 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 cursor-pointer"
+                    className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/40 dark:bg-slate-800/40 hover:bg-slate-100/60 dark:hover:bg-slate-800 transition-all flex items-start gap-3.5 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -523,18 +590,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Footer Bar: ยกเลิก & ยืนยัน */}
-        <div className="border-t border-slate-200/80 dark:border-slate-800 bg-[#f8f9fa] dark:bg-slate-900/90 px-6 py-3 flex items-center justify-end gap-3 shrink-0">
+        <div className="border-t border-slate-200/80 dark:border-slate-800 bg-[#f8f9fa] dark:bg-slate-900/90 px-4 sm:px-6 py-3 flex items-center justify-end gap-2.5 sm:gap-3 shrink-0">
           <button
             type="button"
             onClick={handleCancel}
-            className="px-5 py-1.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs md:text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer"
+            className="flex-1 sm:flex-initial px-4 sm:px-5 py-2 sm:py-1.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs md:text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors shadow-2xs cursor-pointer text-center"
           >
             {t('btnCancel', lang)}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-6 py-1.5 rounded-full bg-pink-600 hover:bg-pink-700 active:bg-pink-800 text-white text-xs md:text-sm font-medium transition-all shadow-xs cursor-pointer"
+            className="flex-1 sm:flex-initial px-5 sm:px-6 py-2 sm:py-1.5 rounded-full bg-pink-600 hover:bg-pink-700 active:bg-pink-800 text-white text-xs md:text-sm font-medium transition-all shadow-xs cursor-pointer text-center"
           >
             {t('btnConfirm', lang)}
           </button>
