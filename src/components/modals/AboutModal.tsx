@@ -72,10 +72,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, languag
                 <span className="font-bold text-slate-800 dark:text-slate-100">
                   {language === 'th' ? 'ผู้พัฒนา:' : 'Developer:'}
                 </span>
-                <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-                  สิทธิชาติ โปธิสิงห์ (Sittichat Pothising)
-                </p>
-                <p className="text-slate-500 dark:text-slate-400">
+                <p className="text-slate-600 dark:text-slate-300 font-medium mt-0.5">
                   นายพิเชษฐ์ ศรีพิชัย (Pichet Sripichai)
                 </p>
               </div>
