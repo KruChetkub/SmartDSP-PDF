@@ -40,14 +40,18 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
   const visualHalfHeight =
     Math.abs(halfW * Math.sin(rad)) + Math.abs(halfH * Math.cos(rad));
 
-  // Determine whether to position above or below the box
-  const shouldFlipToBottom =
-    isBottom ||
-    (pageTopY !== undefined && pageTopY + halfH - visualHalfHeight < 55);
+  // Visual top edge of the rotated box relative to the PDF page top
+  const topEdgeOnPage =
+    pageTopY !== undefined
+      ? pageTopY + halfH - visualHalfHeight
+      : 100;
+
+  // Only flip to below the box if it is touching the top border of the page (< 8px)
+  const shouldFlipToBottom = isBottom || topEdgeOnPage < 8;
 
   const offsetY = shouldFlipToBottom
-    ? Math.round(visualHalfHeight + 14)
-    : -Math.round(visualHalfHeight + 44);
+    ? Math.round(visualHalfHeight + 10)
+    : -Math.round(visualHalfHeight + 38);
 
   return (
     <div
