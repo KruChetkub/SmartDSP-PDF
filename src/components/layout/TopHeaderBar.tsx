@@ -31,7 +31,7 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({
   return (
     <div className="relative z-40 h-11 px-2.5 sm:px-3 bg-[#fbfbfb] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between select-none transition-colors">
       {/* Left: Logo & Branding */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         <div className="w-7 h-7 flex items-center justify-center shrink-0">
           <img
             src="/DSPLogo.svg"
@@ -50,24 +50,24 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({
       </div>
 
       {/* Center: Document Title / Status */}
-      <div className="flex items-center justify-center px-4 overflow-hidden max-w-[40%] md:max-w-[50%]">
+      <div className="flex-1 min-w-0 flex items-center justify-center px-1.5 sm:px-4 overflow-hidden">
         {hasDocument && fileName ? (
           <span
-            className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate"
+            className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate max-w-full"
             title={fileName}
           >
             {fileName}
           </span>
         ) : (
-          <span className="italic text-xs text-slate-400 dark:text-slate-500 font-normal">
+          <span className="italic text-xs text-slate-400 dark:text-slate-500 font-normal truncate">
             {t('noDocumentOpen', language)}
           </span>
         )}
       </div>
 
-      {/* Right: Dark Mode Toggle & Settings Modal Button */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {hasDocument && onOpenMobileTools && (
+      {/* Right: Tools (LayoutGrid), Dark Mode Toggle & Settings Modal Button */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {onOpenMobileTools && (
           <button
             type="button"
             onClick={onOpenMobileTools}
