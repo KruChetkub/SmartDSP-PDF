@@ -22,6 +22,7 @@ interface ShapeAnnotationLayerProps {
   onDeleteShape: (id: string) => void;
   onStartDrag: (e: React.MouseEvent | React.TouchEvent, shape: ShapeAnnotation) => void;
   onStartResize: (e: React.MouseEvent | React.TouchEvent, shape: ShapeAnnotation, handle: ResizeHandleType) => void;
+  onStartRotate?: (e: React.MouseEvent | React.TouchEvent, shape: ShapeAnnotation) => void;
   onOpenInspector?: () => void;
 }
 
@@ -38,6 +39,7 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
   onDeleteShape,
   onStartDrag,
   onStartResize,
+  onStartRotate,
   onOpenInspector,
 }) => {
   const lastTapRef = React.useRef<{ id: string; time: number } | null>(null);
@@ -104,6 +106,8 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
               width: `${shape.width * zoom}px`,
               height: `${shape.height * zoom}px`,
               opacity: shape.opacity ?? 1,
+              transform: `rotate(${shape.rotation || 0}deg)`,
+              transformOrigin: 'center center',
             }}
           >
             {/* Shape Body Rendering */}
@@ -297,10 +301,16 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
             )}
 
             {/* Floating Action Toolbar: Move and Delete */}
-            {/* Floating Action Toolbar: Move, Edit, and Delete */}
+            {/* Floating Action Toolbar: Move, Rotate, Edit, and Delete */}
             {isSelected && toolMode !== 'pan' && (
               <FloatingActionToolbar
                 onStartDrag={(e) => onStartDrag(e, shape)}
+                onRotate={() => {
+                  onUpdateShape({
+                    ...shape,
+                    rotation: ((shape.rotation || 0) + 90) % 360,
+                  });
+                }}
                 onEdit={() => {
                   onOpenInspector?.();
                 }}
@@ -314,10 +324,11 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
               />
             )}
 
-            {/* 8 Circular Magenta Resize Handles */}
+            {/* 8 Circular Magenta Resize Handles + Top Rotate Handle */}
             {isSelected && toolMode !== 'pan' && (
               <ResizeHandlesOverlay
                 onStartResize={(e, handle) => onStartResize(e, shape, handle)}
+                onStartRotate={(e) => onStartRotate?.(e, shape)}
                 color="#d946ef"
               />
             )}

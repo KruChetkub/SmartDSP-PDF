@@ -1,8 +1,14 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (c) 2026 Sittichat Pothising
+// OpenJPDF - PDF Editor (Web)
+// FloatingActionToolbar.tsx - Floating action toolbar with Move, Rotate, Edit, and Delete triggers
+
 import React from 'react';
-import { Move, Trash2, Pencil } from 'lucide-react';
+import { Move, Trash2, Pencil, RotateCw } from 'lucide-react';
 
 interface FloatingActionToolbarProps {
   onStartDrag?: (e: React.MouseEvent | React.TouchEvent) => void;
+  onRotate?: (e: React.MouseEvent | React.TouchEvent) => void;
   onEdit?: (e: React.MouseEvent | React.TouchEvent) => void;
   onDelete: (e: React.MouseEvent | React.TouchEvent) => void;
   accentColor?: string;
@@ -11,6 +17,7 @@ interface FloatingActionToolbarProps {
 
 export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
   onStartDrag,
+  onRotate,
   onEdit,
   onDelete,
   accentColor = '#d946ef',
@@ -37,10 +44,31 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
         </div>
       )}
 
-      {/* Edit Button (Before Delete) */}
-      {onEdit && (
+      {/* Rotate Button (Rotates by 90 degrees) */}
+      {onRotate && (
         <>
           {onStartDrag && <div className="w-[1px] h-3.5 bg-slate-700" />}
+          <button
+            type="button"
+            style={{ touchAction: 'manipulation' }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRotate(e);
+            }}
+            className="px-1.5 py-0.5 hover:bg-slate-700 active:scale-95 rounded text-amber-400 hover:text-amber-300 cursor-pointer transition-colors flex items-center gap-1 text-xs"
+            title="หมุนกล่อง 90° ตามเข็มนาฬิกา"
+          >
+            <RotateCw className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-[11px] font-medium text-amber-300">หมุน</span>
+          </button>
+        </>
+      )}
+
+      {/* Edit Button */}
+      {onEdit && (
+        <>
+          {(onStartDrag || onRotate) && <div className="w-[1px] h-3.5 bg-slate-700" />}
           <button
             type="button"
             style={{ touchAction: 'manipulation' }}
@@ -78,4 +106,3 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
     </div>
   );
 };
-

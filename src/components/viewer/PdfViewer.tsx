@@ -262,8 +262,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   }, [zoom, onZoomChange, onNextPage, onPrevPage, currentPageIndex, totalPages]);
 
 
-  // Drag moving & 8-point resizing hook
-  const { setDragItem, setResizeItem } = useAnnotationInteraction({
+  // Drag moving, 8-point resizing, and rotation hook
+  const { setDragItem, setResizeItem, setRotateItem } = useAnnotationInteraction({
     zoom,
     textAnnotations,
     imageAnnotations,
@@ -272,6 +272,51 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     onUpdateImage,
     onUpdateShape,
   });
+
+  const handleStartRotate = (
+    e: React.MouseEvent | React.TouchEvent,
+    id: string,
+    type: 'text' | 'image' | 'shape',
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    currentRotation: number = 0
+  ) => {
+    if (!containerRef.current) return;
+    const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const containerRect = containerRef.current.getBoundingClientRect();
+
+    let centerX: number;
+    let centerY: number;
+
+    if (type === 'text') {
+      const el = document.getElementById(`text-${id}`);
+      if (el) {
+        const elRect = el.getBoundingClientRect();
+        centerX = elRect.left + elRect.width / 2;
+        centerY = elRect.top + elRect.height / 2;
+      } else {
+        centerX = containerRect.left + (x + 50) * zoom;
+        centerY = containerRect.top + (y + 15) * zoom;
+      }
+    } else {
+      centerX = containerRect.left + (x + width / 2) * zoom;
+      centerY = containerRect.top + (y + height / 2) * zoom;
+    }
+
+    const initialAngle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+
+    setRotateItem({
+      id,
+      type,
+      centerX,
+      centerY,
+      initialAngle,
+      origRotation: currentRotation,
+    });
+  };
 
   // Local editing states
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
@@ -986,6 +1031,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           onUpdateText={onUpdateText}
           onDeleteText={onDeleteText}
           onOpenInspector={onOpenInspector}
+          onStartRotate={(e, item) => handleStartRotate(e, item.id, 'text', item.x, item.y, 100, 30, item.rotation || 0)}
           onStartDrag={(e, item) => {
             const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
             const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
@@ -1013,8 +1059,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             onSelectExtractedBlock(null);
             onSelectShape?.(null);
           }}
+          onUpdateImage={onUpdateImage}
           onDeleteImage={onDeleteImage}
           onOpenInspector={onOpenInspector}
+          onStartRotate={(e, img) => handleStartRotate(e, img.id, 'image', img.x, img.y, img.width, img.height, img.rotation || 0)}
           onStartDrag={(e, img) => {
             const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
             const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
@@ -1063,6 +1111,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           onUpdateShape={onUpdateShape}
           onDeleteShape={onDeleteShape}
           onOpenInspector={onOpenInspector}
+          onStartRotate={(e, shape) => handleStartRotate(e, shape.id, 'shape', shape.x, shape.y, shape.width, shape.height, shape.rotation || 0)}
           onStartDrag={(e, shape) => {
             const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
             const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;

@@ -47,6 +47,15 @@ export interface ResizeItemState {
   origHeight: number;
 }
 
+export interface RotateItemState {
+  id: string;
+  type: 'text' | 'image' | 'shape';
+  centerX: number;
+  centerY: number;
+  initialAngle: number;
+  origRotation: number;
+}
+
 export interface SnapshotBoxState {
   startX: number;
   startY: number;

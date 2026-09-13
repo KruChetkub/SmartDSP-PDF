@@ -15,9 +15,11 @@ interface ImageAnnotationLayerProps {
   toolMode: ToolMode;
   zoom: number;
   onSelectImage: (id: string | null) => void;
+  onUpdateImage: (img: ImageAnnotation) => void;
   onDeleteImage: (id: string) => void;
   onStartDrag: (e: React.MouseEvent | React.TouchEvent, item: ImageAnnotation) => void;
   onStartResize: (e: React.MouseEvent | React.TouchEvent, item: ImageAnnotation, handle: ResizeHandleType) => void;
+  onStartRotate?: (e: React.MouseEvent | React.TouchEvent, item: ImageAnnotation) => void;
   onOpenInspector?: () => void;
 }
 
@@ -27,9 +29,11 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
   toolMode,
   zoom,
   onSelectImage,
+  onUpdateImage,
   onDeleteImage,
   onStartDrag,
   onStartResize,
+  onStartRotate,
   onOpenInspector,
 }) => {
   const lastTapRef = React.useRef<{ id: string; time: number } | null>(null);
@@ -83,6 +87,8 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
               top: `${img.y * zoom}px`,
               width: `${img.width * zoom}px`,
               height: `${img.height * zoom}px`,
+              transform: `rotate(${img.rotation || 0}deg)`,
+              transformOrigin: 'center center',
             }}
           >
             <img
@@ -92,10 +98,17 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
               draggable={false}
             />
 
-            {/* Floating Action Toolbar: Move, Edit, and Delete */}
+            {/* Floating Action Toolbar: Move, Rotate, Edit, and Delete */}
             {isSelected && toolMode !== 'pan' && (
               <FloatingActionToolbar
                 onStartDrag={(e) => onStartDrag(e, img)}
+                onRotate={(e) => {
+                  e.stopPropagation();
+                  onUpdateImage({
+                    ...img,
+                    rotation: ((img.rotation || 0) + 90) % 360,
+                  });
+                }}
                 onEdit={() => onOpenInspector?.()}
                 onDelete={() => {
                   onDeleteImage(img.id);
@@ -106,10 +119,11 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
               />
             )}
 
-            {/* 8 Circular Magenta Resize Handles */}
+            {/* 8 Circular Magenta Resize Handles + Top Rotation Handle */}
             {isSelected && toolMode !== 'pan' && (
               <ResizeHandlesOverlay
                 onStartResize={(e, handle) => onStartResize(e, img, handle)}
+                onStartRotate={(e) => onStartRotate?.(e, img)}
                 color="#d946ef"
               />
             )}

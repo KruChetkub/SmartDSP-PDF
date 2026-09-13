@@ -4,6 +4,7 @@
 // TextAnnotationLayer.tsx - Layer rendering user created text annotations with inline editing & floating toolbar
 
 import React from 'react';
+import { RotateCw } from 'lucide-react';
 import { TextAnnotation, ToolMode } from '../../../types';
 import { getFontFamilyCss } from '../viewerTypes';
 import { FloatingActionToolbar } from '../overlay/FloatingActionToolbar';
@@ -19,6 +20,7 @@ interface TextAnnotationLayerProps {
   onUpdateText: (text: TextAnnotation) => void;
   onDeleteText: (id: string) => void;
   onStartDrag: (e: React.MouseEvent | React.TouchEvent, item: TextAnnotation) => void;
+  onStartRotate?: (e: React.MouseEvent | React.TouchEvent, item: TextAnnotation) => void;
   onOpenInspector?: () => void;
 }
 
@@ -33,6 +35,7 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
   onUpdateText,
   onDeleteText,
   onStartDrag,
+  onStartRotate,
   onOpenInspector,
 }) => {
   const lastTapRef = React.useRef<{ id: string; time: number } | null>(null);
@@ -102,8 +105,31 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
               left: `${item.x * zoom}px`,
               top: `${item.y * zoom}px`,
               opacity: item.opacity ?? 1,
+              transform: `rotate(${item.rotation || 0}deg)`,
+              transformOrigin: 'center center',
             }}
           >
+            {/* Top Rotation Knob */}
+            {isSelected && !isEditing && toolMode !== 'pan' && onStartRotate && (
+              <div className="absolute left-1/2 -translate-x-1/2 -top-7 flex flex-col items-center z-40 pointer-events-auto">
+                <div
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    onStartRotate(e, item);
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                    onStartRotate(e, item);
+                  }}
+                  title="ลากเพื่อหมุนกล่องข้อความ (Rotate Text)"
+                  className="w-5 h-5 rounded-full bg-white dark:bg-slate-800 border-2 border-pink-500 text-pink-600 dark:text-pink-400 shadow-md flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-125 active:scale-125 transition-transform select-none"
+                >
+                  <RotateCw className="w-2.5 h-2.5" />
+                </div>
+                <div className="w-[1.5px] h-2 bg-pink-500/80 pointer-events-none" />
+              </div>
+            )}
+
             {isEditing ? (
               <textarea
                 autoFocus
@@ -150,10 +176,17 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
               </span>
             )}
 
-            {/* Floating Action Toolbar: Move, Edit, and Delete */}
+            {/* Floating Action Toolbar: Move, Rotate, Edit, and Delete */}
             {isSelected && !isEditing && toolMode !== 'pan' && (
               <FloatingActionToolbar
                 onStartDrag={(e) => onStartDrag(e, item)}
+                onRotate={(e) => {
+                  e.stopPropagation();
+                  onUpdateText({
+                    ...item,
+                    rotation: ((item.rotation || 0) + 90) % 360,
+                  });
+                }}
                 onEdit={() => {
                   onOpenInspector?.();
                 }}

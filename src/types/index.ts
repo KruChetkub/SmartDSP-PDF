@@ -71,6 +71,7 @@ export interface TextAnnotation {
   opacity?: number;
   textAlign?: TextAlign;
   verticalAlign?: 'baseline' | 'super' | 'sub';
+  rotation?: number; // In degrees (0-360)
 }
 
 export interface ImageAnnotation {
@@ -83,6 +84,7 @@ export interface ImageAnnotation {
   y: number;
   width: number;
   height: number;
+  rotation?: number; // In degrees (0-360)
 }
 
 export interface ShapeAnnotation {
@@ -98,7 +100,7 @@ export interface ShapeAnnotation {
     | 'note' 
     | 'highlight' 
     | 'underline' 
-    | 'strikethrough'
+    | 'strikethrough' 
     | 'redact';
   x: number;
   y: number;
@@ -110,6 +112,7 @@ export interface ShapeAnnotation {
   opacity?: number;
   text?: string;
   fontSize?: number;
+  rotation?: number; // In degrees (0-360)
 }
 
 export interface DrawingPoint {

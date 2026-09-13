@@ -154,6 +154,9 @@ export class PdfService {
         const lines = (textItem.text || '').split('\n');
 
         if (fontToUse) {
+          const textRot = (textItem.rotation || 0) % 360;
+          const pdfTextRot = (360 - textRot) % 360;
+
           lines.forEach((line, lineIdx) => {
             if (!line) return;
             const lineX = textItem.x;
@@ -167,6 +170,7 @@ export class PdfService {
                 font: fontToUse,
                 color: rgb(color.r, color.g, color.b),
                 opacity: opacity,
+                rotate: textRot !== 0 ? degrees(pdfTextRot) : undefined,
               });
 
               let lineWidth = fontSize * line.length * 0.5;
@@ -214,11 +218,13 @@ export class PdfService {
           }
 
           const yPdf = pHeight - imgItem.y - imgItem.height;
+          const anchor = this.getRotatedAnchor(imgItem.x, yPdf, imgItem.width, imgItem.height, imgItem.rotation || 0);
           copiedPage.drawImage(embeddedImage, {
-            x: imgItem.x,
-            y: yPdf,
+            x: anchor.x,
+            y: anchor.y,
             width: imgItem.width,
             height: imgItem.height,
+            rotate: anchor.rotate,
           });
         } catch (e) {
           console.error('Failed to embed image annotation:', e);
@@ -232,11 +238,12 @@ export class PdfService {
         const fillColor = this.parseColor(shape.fillColor);
         const yPdf = pHeight - shape.y - shape.height;
         const baseOpacity = Math.max(0, Math.min(1, shape.opacity ?? 1));
+        const anchor = this.getRotatedAnchor(shape.x, yPdf, shape.width, shape.height, shape.rotation || 0);
 
         if (shape.type === 'rect') {
           copiedPage.drawRectangle({
-            x: shape.x,
-            y: yPdf,
+            x: anchor.x,
+            y: anchor.y,
             width: shape.width,
             height: shape.height,
             borderColor: shape.strokeWidth > 0 ? rgb(strokeColor.r, strokeColor.g, strokeColor.b) : undefined,
@@ -244,6 +251,7 @@ export class PdfService {
             borderOpacity: baseOpacity * strokeColor.a,
             color: fillColor ? rgb(fillColor.r, fillColor.g, fillColor.b) : undefined,
             opacity: fillColor ? baseOpacity * fillColor.a : undefined,
+            rotate: anchor.rotate,
           });
         } else if (shape.type === 'circle' || shape.type === 'ellipse') {
           const xCenter = shape.x + shape.width / 2;
@@ -265,8 +273,8 @@ export class PdfService {
         } else if (shape.type === 'stamp') {
           // Draw stamp border & background
           copiedPage.drawRectangle({
-            x: shape.x,
-            y: yPdf,
+            x: anchor.x,
+            y: anchor.y,
             width: shape.width,
             height: shape.height,
             borderColor: rgb(strokeColor.r, strokeColor.g, strokeColor.b),
@@ -274,6 +282,7 @@ export class PdfService {
             borderOpacity: baseOpacity,
             color: fillColor ? rgb(fillColor.r, fillColor.g, fillColor.b) : rgb(1, 0.9, 0.9),
             opacity: fillColor ? baseOpacity * fillColor.a : baseOpacity * 0.7,
+            rotate: anchor.rotate,
           });
 
           // Draw stamp text centered
@@ -285,21 +294,23 @@ export class PdfService {
               const textWidth = fontToUse.widthOfTextAtSize(stampText, fontSize);
               const textX = shape.x + (shape.width - textWidth) / 2;
               const textY = yPdf + (shape.height - fontSize * 0.8) / 2;
+              const textAnchor = this.getRotatedAnchor(textX, textY, textWidth, fontSize, shape.rotation || 0);
               copiedPage.drawText(stampText, {
-                x: Math.max(shape.x + 2, textX),
-                y: textY,
+                x: textAnchor.x,
+                y: textAnchor.y,
                 size: fontSize,
                 font: fontToUse,
                 color: rgb(strokeColor.r, strokeColor.g, strokeColor.b),
                 opacity: baseOpacity,
+                rotate: textAnchor.rotate,
               });
             } catch (_) {}
           }
         } else if (shape.type === 'note') {
           // Sticky note background
           copiedPage.drawRectangle({
-            x: shape.x,
-            y: yPdf,
+            x: anchor.x,
+            y: anchor.y,
             width: shape.width,
             height: shape.height,
             borderColor: rgb(strokeColor.r, strokeColor.g, strokeColor.b),
@@ -307,16 +318,19 @@ export class PdfService {
             borderOpacity: baseOpacity,
             color: fillColor ? rgb(fillColor.r, fillColor.g, fillColor.b) : rgb(0.99, 0.94, 0.54),
             opacity: fillColor ? baseOpacity * fillColor.a : baseOpacity * 0.95,
+            rotate: anchor.rotate,
           });
 
           // Note top bar
+          const topBarAnchor = this.getRotatedAnchor(shape.x, yPdf + shape.height - 14, shape.width, 14, shape.rotation || 0);
           copiedPage.drawRectangle({
-            x: shape.x,
-            y: yPdf + shape.height - 14,
+            x: topBarAnchor.x,
+            y: topBarAnchor.y,
             width: shape.width,
             height: 14,
             color: rgb(0.98, 0.8, 0.08),
             opacity: baseOpacity * 0.5,
+            rotate: topBarAnchor.rotate,
           });
 
           // Note text
@@ -325,25 +339,28 @@ export class PdfService {
           const fontToUse = embeddedSarabun;
           if (fontToUse) {
             try {
+              const noteTextAnchor = this.getRotatedAnchor(shape.x + 6, yPdf + shape.height - 26, shape.width - 12, fontSize, shape.rotation || 0);
               copiedPage.drawText(noteText, {
-                x: shape.x + 6,
-                y: yPdf + shape.height - 26,
+                x: noteTextAnchor.x,
+                y: noteTextAnchor.y,
                 size: fontSize,
                 font: fontToUse,
                 color: rgb(0.2, 0.1, 0),
                 opacity: baseOpacity,
+                rotate: noteTextAnchor.rotate,
               });
             } catch (_) {}
           }
         } else if (shape.type === 'highlight') {
           const hlColor = fillColor || { r: 0.98, g: 0.8, b: 0.08, a: 0.45 };
           copiedPage.drawRectangle({
-            x: shape.x,
-            y: yPdf,
+            x: anchor.x,
+            y: anchor.y,
             width: shape.width,
             height: shape.height,
             color: rgb(hlColor.r, hlColor.g, hlColor.b),
             opacity: baseOpacity * (hlColor.a || 0.45),
+            rotate: anchor.rotate,
           });
         } else if (shape.type === 'underline') {
           copiedPage.drawLine({
@@ -598,6 +615,38 @@ export class PdfService {
     const parsed = this.parseColor(hex);
     if (!parsed) return { r: 0, g: 0, b: 0 };
     return { r: parsed.r, g: parsed.g, b: parsed.b };
+  }
+
+  /**
+   * Helper to compute rotated anchor point so rotation occurs around center in pdf-lib
+   */
+  private static getRotatedAnchor(
+    x: number,
+    yPdf: number,
+    width: number,
+    height: number,
+    rotationDeg: number = 0
+  ): { x: number; y: number; rotate: any } {
+    const rot = (rotationDeg || 0) % 360;
+    if (rot === 0) {
+      return { x, y: yPdf, rotate: degrees(0) };
+    }
+    // CSS rotation is clockwise, PDF coordinate rotation is counter-clockwise
+    const pdfRot = (360 - rot) % 360;
+    const rad = (pdfRot * Math.PI) / 180;
+    const cx = x + width / 2;
+    const cy = yPdf + height / 2;
+    const halfW = width / 2;
+    const halfH = height / 2;
+
+    const rotatedOffsetX = (-halfW) * Math.cos(rad) - (-halfH) * Math.sin(rad);
+    const rotatedOffsetY = (-halfW) * Math.sin(rad) + (-halfH) * Math.cos(rad);
+
+    return {
+      x: cx + rotatedOffsetX,
+      y: cy + rotatedOffsetY,
+      rotate: degrees(pdfRot),
+    };
   }
 
   /**

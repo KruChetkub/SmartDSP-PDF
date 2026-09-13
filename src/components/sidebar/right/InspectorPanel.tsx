@@ -17,7 +17,8 @@ import {
   AlignRight, 
   AlignJustify,
   Type,
-  Shapes
+  Shapes,
+  RotateCw
 } from 'lucide-react';
 import { ThaiFontFamily, TextAlign, ExtractedTextBlock, TextAnnotation, ShapeAnnotation, PdfMetadata } from '../../../types';
 import { AppLanguage } from '../../../types/settings';
@@ -393,6 +394,50 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* Rotation for Text Annotation */}
+            {selectedTextAnnotation && (
+              <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <RotateCw className="w-3.5 h-3.5 text-pink-500" />
+                    {language === 'th' ? 'การหมุน (องศา)' : 'Rotation (Degrees)'}
+                  </label>
+                  <span className="text-xs font-mono font-bold text-pink-600 dark:text-pink-400">
+                    {selectedTextAnnotation.rotation || 0}°
+                  </span>
+                </div>
+
+                {/* Quick Preset Buttons */}
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[0, 90, 180, 270].map((deg) => (
+                    <button
+                      key={deg}
+                      type="button"
+                      onClick={() => onUpdateTextAnnotation({ ...selectedTextAnnotation, rotation: deg })}
+                      className={`py-1 text-xs rounded border transition-colors ${
+                        (selectedTextAnnotation.rotation || 0) === deg
+                          ? 'bg-pink-500 text-white border-pink-600 font-bold shadow-xs'
+                          : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      {deg}°
+                    </button>
+                  ))}
+                </div>
+
+                {/* Slider 0 - 360 */}
+                <input
+                  type="range"
+                  min="0"
+                  max="360"
+                  step="5"
+                  value={selectedTextAnnotation.rotation || 0}
+                  onChange={(e) => onUpdateTextAnnotation({ ...selectedTextAnnotation, rotation: Number(e.target.value) })}
+                  className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -624,7 +669,49 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               </div>
             </div>
 
-            {/* 5. ขนาดและตำแหน่ง (Dimensions & Position) */}
+            {/* 5. การหมุน (Rotation) */}
+            <div className="space-y-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                  <RotateCw className="w-3.5 h-3.5 text-pink-500" />
+                  {language === 'th' ? 'การหมุน (องศา)' : 'Rotation (Degrees)'}
+                </label>
+                <span className="text-xs font-mono font-bold text-pink-600 dark:text-pink-400">
+                  {selectedShape.rotation || 0}°
+                </span>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {[0, 90, 180, 270].map((deg) => (
+                  <button
+                    key={deg}
+                    type="button"
+                    onClick={() => onUpdateShape?.({ ...selectedShape, rotation: deg })}
+                    className={`py-1 text-xs rounded border transition-colors ${
+                      (selectedShape.rotation || 0) === deg
+                        ? 'bg-pink-500 text-white border-pink-600 font-bold shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    {deg}°
+                  </button>
+                ))}
+              </div>
+
+              {/* Slider 0 - 360 */}
+              <input
+                type="range"
+                min="0"
+                max="360"
+                step="5"
+                value={selectedShape.rotation || 0}
+                onChange={(e) => onUpdateShape?.({ ...selectedShape, rotation: Number(e.target.value) })}
+                className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-pink-500"
+              />
+            </div>
+
+            {/* 6. ขนาดและตำแหน่ง (Dimensions & Position) */}
             <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
               <span>{language === 'th' ? 'ขนาดวัตถุ' : 'Dimensions'}:</span>
               <span className="font-mono text-slate-700 dark:text-slate-300">

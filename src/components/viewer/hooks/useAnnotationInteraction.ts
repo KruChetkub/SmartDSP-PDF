@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (c) 2026 Sittichat Pothising
 // OpenJPDF - PDF Editor (Web)
-// useAnnotationInteraction.ts - Custom hook managing drag moving and 8-point resizing of annotations
+// useAnnotationInteraction.ts - Custom hook managing drag moving, 8-point resizing, and rotation of annotations
 
 import { useState, useEffect } from 'react';
 import { TextAnnotation, ImageAnnotation, ShapeAnnotation } from '../../../types';
-import { DragItemState, ResizeItemState } from '../viewerTypes';
+import { DragItemState, ResizeItemState, RotateItemState } from '../viewerTypes';
 
 interface UseAnnotationInteractionProps {
   zoom: number;
@@ -28,9 +28,10 @@ export const useAnnotationInteraction = ({
 }: UseAnnotationInteractionProps) => {
   const [dragItem, setDragItem] = useState<DragItemState | null>(null);
   const [resizeItem, setResizeItem] = useState<ResizeItemState | null>(null);
+  const [rotateItem, setRotateItem] = useState<RotateItemState | null>(null);
 
   useEffect(() => {
-    if (!dragItem && !resizeItem) return;
+    if (!dragItem && !resizeItem && !rotateItem) return;
 
     const updateDrag = (clientX: number, clientY: number) => {
       if (!dragItem) return;
@@ -140,22 +141,55 @@ export const useAnnotationInteraction = ({
       }
     };
 
+    const updateRotate = (clientX: number, clientY: number) => {
+      if (!rotateItem) return;
+      const dx = clientX - rotateItem.centerX;
+      const dy = clientY - rotateItem.centerY;
+      // Angle in degrees from center
+      const currentAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const angleDiff = currentAngle - rotateItem.initialAngle;
+      let newRot = Math.round((rotateItem.origRotation + angleDiff + 360) % 360);
+
+      // Snap to 0, 45, 90, 135, 180, 225, 270, 315 within 4 degrees
+      const snapAngles = [0, 45, 90, 135, 180, 225, 270, 315, 360];
+      for (const snap of snapAngles) {
+        if (Math.abs(newRot - snap) <= 4) {
+          newRot = snap % 360;
+          break;
+        }
+      }
+
+      if (rotateItem.type === 'text') {
+        const item = textAnnotations.find((t) => t.id === rotateItem.id);
+        if (item) onUpdateText({ ...item, rotation: newRot });
+      } else if (rotateItem.type === 'image') {
+        const item = imageAnnotations.find((i) => i.id === rotateItem.id);
+        if (item) onUpdateImage({ ...item, rotation: newRot });
+      } else if (rotateItem.type === 'shape') {
+        const item = shapeAnnotations.find((s) => s.id === rotateItem.id);
+        if (item) onUpdateShape({ ...item, rotation: newRot });
+      }
+    };
+
     const handleWindowMouseMove = (e: MouseEvent) => {
       if (dragItem) updateDrag(e.clientX, e.clientY);
       else if (resizeItem) updateResize(e.clientX, e.clientY);
+      else if (rotateItem) updateRotate(e.clientX, e.clientY);
     };
 
     const handleWindowTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 1 && (dragItem || resizeItem)) {
-        if (e.cancelable) e.preventDefault(); // Prevent scrolling page while moving annotation
+      if (e.touches.length === 1 && (dragItem || resizeItem || rotateItem)) {
+        if (e.cancelable) e.preventDefault(); // Prevent scrolling page while moving/resizing/rotating annotation
         if (dragItem) updateDrag(e.touches[0].clientX, e.touches[0].clientY);
         else if (resizeItem) updateResize(e.touches[0].clientX, e.touches[0].clientY);
+        else if (rotateItem) updateRotate(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
 
     const handleWindowEnd = () => {
       setDragItem(null);
       setResizeItem(null);
+      setRotateItem(null);
     };
 
     window.addEventListener('mousemove', handleWindowMouseMove);
@@ -174,6 +208,7 @@ export const useAnnotationInteraction = ({
   }, [
     dragItem,
     resizeItem,
+    rotateItem,
     zoom,
     textAnnotations,
     imageAnnotations,
@@ -188,6 +223,7 @@ export const useAnnotationInteraction = ({
     setDragItem,
     resizeItem,
     setResizeItem,
+    rotateItem,
+    setRotateItem,
   };
 };
-
