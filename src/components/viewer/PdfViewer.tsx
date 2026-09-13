@@ -154,11 +154,28 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         touches[0].clientY - touches[1].clientY
       );
 
+    let pinchRafId: number | null = null;
+
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
         // Start pinch
         touchPinchRef.current = { initialDistance: getDistance(e.touches), initialZoom: zoom };
         swipeTouchRef.current = null; // Cancel any swipe
+        if (inner) {
+          inner.style.transition = 'none';
+          inner.style.willChange = 'transform';
+          // Compute pinch center
+          const touch0 = e.touches[0];
+          const touch1 = e.touches[1];
+          const midX = (touch0.clientX + touch1.clientX) / 2;
+          const midY = (touch0.clientY + touch1.clientY) / 2;
+          const rect = inner.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            const originX = Math.max(0, Math.min(100, ((midX - rect.left) / rect.width) * 100));
+            const originY = Math.max(0, Math.min(100, ((midY - rect.top) / rect.height) * 100));
+            inner.style.transformOrigin = `${originX}% ${originY}%`;
+          }
+        }
       } else if (e.touches.length === 1) {
         // Track swipe start
         swipeTouchRef.current = {
@@ -174,17 +191,27 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         e.preventDefault();
         const factor = getDistance(e.touches) / touchPinchRef.current.initialDistance;
         const clampedFactor = Math.min(2.5 / zoom, Math.max(0.4 / zoom, factor));
-        // Apply CSS scale directly — zero React re-renders during pinch
-        inner.style.transform = `scale(${clampedFactor})`;
-        inner.style.transformOrigin = 'center top';
+        
+        if (pinchRafId) cancelAnimationFrame(pinchRafId);
+        pinchRafId = requestAnimationFrame(() => {
+          if (inner) {
+            inner.style.transform = `scale(${clampedFactor})`;
+          }
+        });
       }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (pinchRafId) {
+        cancelAnimationFrame(pinchRafId);
+        pinchRafId = null;
+      }
       // Commit pinch zoom
       if (touchPinchRef.current && inner && inner.style.transform !== '' && inner.style.transform !== 'none') {
         const currentTransform = inner.style.transform;
         const match = currentTransform.match(/scale\(([^)]+)\)/);
+        inner.style.willChange = 'auto';
+        inner.style.transformOrigin = 'center top';
         if (match && onZoomChange) {
           const visualFactor = parseFloat(match[1]);
           const newZoom = Math.min(2.5, Math.max(0.4, Number((touchPinchRef.current.initialZoom * visualFactor).toFixed(2))));
@@ -196,6 +223,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         touchPinchRef.current = null;
         swipeTouchRef.current = null;
         return;
+      }
+      if (inner) {
+        inner.style.willChange = 'auto';
       }
       touchPinchRef.current = null;
 
@@ -222,6 +252,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     el.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     return () => {
+      if (pinchRafId) cancelAnimationFrame(pinchRafId);
       el.removeEventListener('touchstart', handleTouchStart);
       el.removeEventListener('touchmove', handleTouchMove);
       el.removeEventListener('touchend', handleTouchEnd);
@@ -873,7 +904,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         onTouchStart={handleOverlayTouchStart}
         onTouchMove={handleOverlayTouchMove}
         onTouchEnd={handleOverlayTouchEnd}
-        className={`relative bg-white shadow-xl dark:shadow-2xl dark:shadow-black/60 rounded-sm transition-transform duration-75 origin-top ${
+        className={`relative bg-white shadow-xl dark:shadow-2xl dark:shadow-black/60 rounded-sm origin-top ${
           toolMode === 'draw' ||
           toolMode === 'rect' ||
           toolMode === 'circle' ||

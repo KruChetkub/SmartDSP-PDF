@@ -844,42 +844,86 @@ export const App: React.FC = () => {
   const handleZoomOut = () => setZoom((z) => Math.max(0.5, Number((z - 0.15).toFixed(2))));
   const handleResetZoom = () => setZoom(1.0);
 
-  // Auto fit-to-page on mobile when a new PDF is opened
+  // Calculate smart fit scale based on page aspect ratio and screen orientation
+  const calculateFitScale = useCallback((pageIdx: number = currentPageIndex) => {
+    const page = pages[pageIdx] || pages[0];
+    if (!page) return 1.0;
+
+    const isRotated90or270 = page.rotation === 90 || page.rotation === 270;
+    const rawW = page.width || 595;
+    const rawH = page.height || 842;
+    const pageWidth = isRotated90or270 ? rawH : rawW;
+    const pageHeight = isRotated90or270 ? rawW : rawH;
+
+    const isMobileScreen = window.innerWidth < 768;
+    const isScreenLandscape = window.innerWidth > window.innerHeight;
+    const isPageLandscape = pageWidth > pageHeight;
+
+    const sidebarOffset = leftSidebarTab ? 350 : (isMobileScreen ? 0 : 100);
+    const headerOffset = isMobileScreen ? 44 + 56 : 44 + 88; // TopBar + (MobileBar or Ribbon)
+    const availableWidth = Math.max(200, window.innerWidth - sidebarOffset - (isMobileScreen ? 12 : 64));
+    const availableHeight = Math.max(200, window.innerHeight - headerOffset - (isMobileScreen ? 16 : 64));
+
+    const fitByWidth = availableWidth / pageWidth;
+    const fitByHeight = availableHeight / pageHeight;
+
+    let fitScale: number;
+
+    if (isMobileScreen) {
+      if (isPageLandscape && !isScreenLandscape) {
+        // Page is landscape on portrait screen: fit width to display full width cleanly
+        fitScale = fitByWidth;
+      } else if (isScreenLandscape) {
+        // Rotated to landscape screen: fit according to screen aspect ratio
+        fitScale = Math.min(fitByWidth, fitByHeight);
+      } else {
+        // Portrait page on portrait screen: fit whole page
+        fitScale = Math.min(fitByWidth, fitByHeight);
+      }
+    } else {
+      // Desktop: fit width
+      fitScale = fitByWidth;
+    }
+
+    return Math.min(2.5, Math.max(0.3, Number(fitScale.toFixed(2))));
+  }, [pages, currentPageIndex, leftSidebarTab]);
+
+  // Auto fit on mobile when a new PDF is opened
   useEffect(() => {
     if (!pdfDoc || !isMobile || pages.length === 0) return;
     const timer = setTimeout(() => {
-      const pageWidth = pages[0]?.width || 595;
-      const pageHeight = pages[0]?.height || 842;
-      const availableWidth = window.innerWidth - 16;
-      const availableHeight = window.innerHeight - 44 - 56 - 24; // TopBar + MobileBar + padding
-      const fitScale = Math.min(
-        availableWidth / pageWidth,
-        availableHeight / pageHeight,
-        2.5
-      );
-      setZoom(Math.max(0.3, Number(fitScale.toFixed(2))));
-    }, 150); // wait for render
+      const initialScale = calculateFitScale(0);
+      setZoom(initialScale);
+    }, 150);
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfDoc]);
+  }, [pdfDoc, isMobile, calculateFitScale]);
+
+  // Auto-fit when screen orientation changes or window resizes on mobile
+  useEffect(() => {
+    if (!pdfDoc || pages.length === 0) return;
+
+    let resizeTimer: number;
+    const handleResizeOrOrientation = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        const newScale = calculateFitScale(currentPageIndex);
+        setZoom(newScale);
+      }, 150);
+    };
+
+    window.addEventListener('resize', handleResizeOrOrientation);
+    window.addEventListener('orientationchange', handleResizeOrOrientation);
+    return () => {
+      window.clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResizeOrOrientation);
+      window.removeEventListener('orientationchange', handleResizeOrOrientation);
+    };
+  }, [pdfDoc, pages, currentPageIndex, calculateFitScale]);
 
   const handleFitWidth = useCallback(() => {
-    if (!pages[currentPageIndex]) return;
-    const pageWidth = pages[currentPageIndex].width || 595;
-    const pageHeight = pages[currentPageIndex].height || 842;
-    const isMobileScreen = window.innerWidth < 768;
-    const sidebarOffset = leftSidebarTab ? 350 : (isMobileScreen ? 0 : 100);
-    const headerOffset = isMobileScreen ? 44 + 56 : 44 + 88; // TopBar + (MobileBar or Ribbon)
-    const availableWidth = window.innerWidth - sidebarOffset - (isMobileScreen ? 16 : 64);
-    const availableHeight = window.innerHeight - headerOffset - (isMobileScreen ? 24 : 64);
-    const fitByWidth = availableWidth / pageWidth;
-    const fitByHeight = availableHeight / pageHeight;
-    // On mobile: fit the whole page (fit-to-page), on desktop: fit width
-    const fitScale = isMobileScreen
-      ? Math.min(fitByWidth, fitByHeight)
-      : fitByWidth;
-    setZoom(Math.min(2.5, Math.max(0.3, Number(fitScale.toFixed(2)))));
-  }, [pages, currentPageIndex, leftSidebarTab]);
+    const scale = calculateFitScale(currentPageIndex);
+    setZoom(scale);
+  }, [calculateFitScale, currentPageIndex]);
 
   // Export PDF with all edits
   const handleExportPdf = async () => {
