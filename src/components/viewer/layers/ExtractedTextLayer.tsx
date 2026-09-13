@@ -19,6 +19,7 @@ interface ExtractedTextLayerProps {
   onSelectBlock: (id: string | null) => void;
   onStartEditing: (id: string | null) => void;
   onUpdateBlock: (block: ExtractedTextBlock) => void;
+  onOpenInspector?: () => void;
 }
 
 export const ExtractedTextLayer: React.FC<ExtractedTextLayerProps> = ({
@@ -29,19 +30,24 @@ export const ExtractedTextLayer: React.FC<ExtractedTextLayerProps> = ({
   zoom,
   matchingBlockIds,
   activeSearchBlockId,
-  disableLatinSpacing,
+  disableLatinSpacing = false,
   onSelectBlock,
   onStartEditing,
   onUpdateBlock,
+  onOpenInspector,
 }) => {
+  const lastTapRef = React.useRef<{ id: string; time: number } | null>(null);
+
+  if (pageExtractedBlocks.length === 0) return null;
+
   return (
     <>
       {pageExtractedBlocks.map((block) => {
         if (block.isDeleted) return null;
         const isSelected = selectedExtractedBlockId === block.id;
         const isEditing = editingExtractedId === block.id;
-        const isEdited = block.isEdited;
-        const isMatch = !!(matchingBlockIds && matchingBlockIds.size > 0 && matchingBlockIds.has(block.id));
+        const isEdited = !!block.isEdited;
+        const isMatch = matchingBlockIds?.has(block.id);
         const isActiveMatch = isMatch && activeSearchBlockId === block.id;
         const textDeco = [
           block.isUnderline ? 'underline' : '',
@@ -57,10 +63,25 @@ export const ExtractedTextLayer: React.FC<ExtractedTextLayerProps> = ({
               e.stopPropagation();
               onSelectBlock(block.id);
             }}
+            onTouchStart={(e) => {
+              if (toolMode !== 'editText') return;
+              e.stopPropagation();
+              onSelectBlock(block.id);
+
+              const now = Date.now();
+              if (lastTapRef.current && lastTapRef.current.id === block.id && now - lastTapRef.current.time < 350) {
+                lastTapRef.current = null;
+                onOpenInspector?.();
+                onStartEditing(block.id);
+              } else {
+                lastTapRef.current = { id: block.id, time: now };
+              }
+            }}
             onDoubleClick={(e) => {
               if (toolMode !== 'editText') return;
               e.stopPropagation();
               onSelectBlock(block.id);
+              onOpenInspector?.();
               onStartEditing(block.id);
             }}
             className={`absolute transition-colors ${

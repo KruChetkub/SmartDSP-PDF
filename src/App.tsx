@@ -1664,7 +1664,9 @@ export const App: React.FC = () => {
                 if (id) {
                   setSelectedTextAnnotationId(null);
                   setSelectedShapeId(null);
-                  setIsInspectorOpen(true);
+                  if (!isMobile) {
+                    setIsInspectorOpen(true);
+                  }
                 } else if (!selectedTextAnnotationId && !selectedShapeId) {
                   setIsInspectorOpen(false);
                 }
@@ -1686,7 +1688,9 @@ export const App: React.FC = () => {
                 if (id) {
                   setSelectedExtractedBlockId(null);
                   setSelectedShapeId(null);
-                  setIsInspectorOpen(true);
+                  if (!isMobile) {
+                    setIsInspectorOpen(true);
+                  }
                 } else if (!selectedExtractedBlockId && !selectedShapeId) {
                   setIsInspectorOpen(false);
                 }
@@ -1697,7 +1701,9 @@ export const App: React.FC = () => {
                 if (id) {
                   setSelectedTextAnnotationId(null);
                   setSelectedExtractedBlockId(null);
-                  setIsInspectorOpen(true);
+                  if (!isMobile) {
+                    setIsInspectorOpen(true);
+                  }
                 } else if (!selectedTextAnnotationId && !selectedExtractedBlockId) {
                   setIsInspectorOpen(false);
                 }
@@ -1707,7 +1713,9 @@ export const App: React.FC = () => {
                 setSelectedTextAnnotationId(newText.id);
                 setSelectedExtractedBlockId(null);
                 setSelectedShapeId(null);
-                setIsInspectorOpen(true);
+                if (!isMobile) {
+                  setIsInspectorOpen(true);
+                }
               }}
               onUpdateText={(updated) =>
                 setTextAnnotations((prev) =>
@@ -1731,8 +1739,12 @@ export const App: React.FC = () => {
                 setSelectedShapeId(newShape.id);
                 setSelectedTextAnnotationId(null);
                 setSelectedExtractedBlockId(null);
-                setIsInspectorOpen(true);
+                if (!isMobile) {
+                  setIsInspectorOpen(true);
+                }
               }}
+              onOpenInspector={() => setIsInspectorOpen(true)}
+              onCloseInspector={() => setIsInspectorOpen(false)}
               onUpdateShape={(updated) =>
                 setShapeAnnotations((prev) =>
                   prev.map((s) => (s.id === updated.id ? updated : s))

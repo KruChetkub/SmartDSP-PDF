@@ -22,6 +22,7 @@ interface ShapeAnnotationLayerProps {
   onDeleteShape: (id: string) => void;
   onStartDrag: (e: React.MouseEvent | React.TouchEvent, shape: ShapeAnnotation) => void;
   onStartResize: (e: React.MouseEvent | React.TouchEvent, shape: ShapeAnnotation, handle: ResizeHandleType) => void;
+  onOpenInspector?: () => void;
 }
 
 export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
@@ -37,7 +38,10 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
   onDeleteShape,
   onStartDrag,
   onStartResize,
+  onOpenInspector,
 }) => {
+  const lastTapRef = React.useRef<{ id: string; time: number } | null>(null);
+
   return (
     <>
       {pageShapes.map((shape) => {
@@ -60,14 +64,27 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
               if (toolMode === 'pan' || toolMode === 'selectText') return;
               e.stopPropagation();
               onSelectShape?.(shape.id);
-              if (!isEditing) {
-                onStartDrag(e, shape);
+
+              const now = Date.now();
+              // Double-tap detector: 2 taps on same shape within 350ms opens inspector bottom sheet
+              if (lastTapRef.current && lastTapRef.current.id === shape.id && now - lastTapRef.current.time < 350) {
+                lastTapRef.current = null;
+                onOpenInspector?.();
+                if (shape.type === 'note' || shape.type === 'stamp') {
+                  onStartEditingShape(shape.id);
+                }
+              } else {
+                lastTapRef.current = { id: shape.id, time: now };
+                if (!isEditing) {
+                  onStartDrag(e, shape);
+                }
               }
             }}
             onDoubleClick={(e) => {
               if (toolMode === 'pan' || toolMode === 'selectText') return;
               e.stopPropagation();
               onSelectShape?.(shape.id);
+              onOpenInspector?.();
               if (shape.type === 'note' || shape.type === 'stamp') {
                 onStartEditingShape(shape.id);
               }

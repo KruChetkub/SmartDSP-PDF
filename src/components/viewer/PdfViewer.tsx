@@ -82,6 +82,8 @@ interface PdfViewerProps {
   onNextPage?: () => void;
   onPrevPage?: () => void;
   totalPages?: number;
+  onOpenInspector?: () => void;
+  onCloseInspector?: () => void;
 }
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
@@ -127,6 +129,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   onNextPage,
   onPrevPage,
   totalPages = 1,
+  onOpenInspector,
+  onCloseInspector,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -484,6 +488,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         setEditingTextId(null);
         setEditingExtractedId(null);
         setEditingShapeId(null);
+        onCloseInspector?.();
       }
     }
   };
@@ -732,6 +737,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         setEditingTextId(null);
         setEditingExtractedId(null);
         setEditingShapeId(null);
+        onCloseInspector?.();
       }
     }
   };
@@ -842,10 +848,21 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           setEditingTextId(null);
           setEditingExtractedId(null);
           setEditingShapeId(null);
+          onCloseInspector?.();
         }
       }}
       onTouchStart={(e) => {
         handlePanTouchStart(e);
+        if (e.target === e.currentTarget) {
+          onSelectTextAnnotation(null);
+          onSelectExtractedBlock(null);
+          setSelectedImageId(null);
+          onSelectShape?.(null);
+          setEditingTextId(null);
+          setEditingExtractedId(null);
+          setEditingShapeId(null);
+          onCloseInspector?.();
+        }
       }}
     >
       <div
@@ -919,6 +936,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             }
           }}
           onUpdateBlock={onUpdateExtractedBlock}
+          onOpenInspector={onOpenInspector}
         />
 
         {/* Text Annotations Layer (Add New Text) */}
@@ -936,6 +954,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           onStartEditing={(id) => setEditingTextId(id)}
           onUpdateText={onUpdateText}
           onDeleteText={onDeleteText}
+          onOpenInspector={onOpenInspector}
           onStartDrag={(e, item) => {
             const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
             const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
@@ -964,6 +983,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             onSelectShape?.(null);
           }}
           onDeleteImage={onDeleteImage}
+          onOpenInspector={onOpenInspector}
           onStartDrag={(e, img) => {
             const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
             const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
@@ -1011,6 +1031,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           onStartEditingShape={(id) => setEditingShapeId(id)}
           onUpdateShape={onUpdateShape}
           onDeleteShape={onDeleteShape}
+          onOpenInspector={onOpenInspector}
           onStartDrag={(e, shape) => {
             const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
             const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;

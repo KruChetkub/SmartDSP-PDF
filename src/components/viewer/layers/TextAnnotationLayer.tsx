@@ -19,6 +19,7 @@ interface TextAnnotationLayerProps {
   onUpdateText: (text: TextAnnotation) => void;
   onDeleteText: (id: string) => void;
   onStartDrag: (e: React.MouseEvent | React.TouchEvent, item: TextAnnotation) => void;
+  onOpenInspector?: () => void;
 }
 
 export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
@@ -32,7 +33,10 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
   onUpdateText,
   onDeleteText,
   onStartDrag,
+  onOpenInspector,
 }) => {
+  const lastTapRef = React.useRef<{ id: string; time: number } | null>(null);
+
   return (
     <>
       {pageTexts.map((item) => {
@@ -62,14 +66,25 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
               e.stopPropagation();
               onSelectText(item.id);
 
-              if (!isEditing) {
-                onStartDrag(e, item);
+              const now = Date.now();
+              // Double-tap detector: 2 taps on same item within 350ms opens editing tools
+              if (lastTapRef.current && lastTapRef.current.id === item.id && now - lastTapRef.current.time < 350) {
+                lastTapRef.current = null;
+                onOpenInspector?.();
+                onStartEditing(item.id);
+              } else {
+                lastTapRef.current = { id: item.id, time: now };
+                // Single touch / hold to drag: do NOT open inspector, just drag
+                if (!isEditing) {
+                  onStartDrag(e, item);
+                }
               }
             }}
             onDoubleClick={(e) => {
               if (toolMode === 'pan' || toolMode === 'selectText') return;
               e.stopPropagation();
               onSelectText(item.id);
+              onOpenInspector?.();
               onStartEditing(item.id);
             }}
             className={`absolute transition-shadow ${

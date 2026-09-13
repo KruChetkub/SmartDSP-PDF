@@ -18,6 +18,7 @@ interface ImageAnnotationLayerProps {
   onDeleteImage: (id: string) => void;
   onStartDrag: (e: React.MouseEvent | React.TouchEvent, item: ImageAnnotation) => void;
   onStartResize: (e: React.MouseEvent | React.TouchEvent, item: ImageAnnotation, handle: ResizeHandleType) => void;
+  onOpenInspector?: () => void;
 }
 
 export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
@@ -29,7 +30,10 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
   onDeleteImage,
   onStartDrag,
   onStartResize,
+  onOpenInspector,
 }) => {
+  const lastTapRef = React.useRef<{ id: string; time: number } | null>(null);
+
   return (
     <>
       {pageImages.map((img) => {
@@ -48,7 +52,22 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
               if (toolMode === 'pan' || toolMode === 'selectText') return;
               e.stopPropagation();
               onSelectImage(img.id);
-              onStartDrag(e, img);
+
+              const now = Date.now();
+              // Double-tap detector: 2 taps on same image within 350ms opens inspector
+              if (lastTapRef.current && lastTapRef.current.id === img.id && now - lastTapRef.current.time < 350) {
+                lastTapRef.current = null;
+                onOpenInspector?.();
+              } else {
+                lastTapRef.current = { id: img.id, time: now };
+                onStartDrag(e, img);
+              }
+            }}
+            onDoubleClick={(e) => {
+              if (toolMode === 'pan' || toolMode === 'selectText') return;
+              e.stopPropagation();
+              onSelectImage(img.id);
+              onOpenInspector?.();
             }}
             className={`absolute select-none ${
               toolMode === 'pan' || toolMode === 'selectText'
