@@ -109,13 +109,27 @@ export const RightSidebarContainer: React.FC<RightSidebarContainerProps> = ({
   history,
   onClearHistory,
 }) => {
+  const openedAtRef = React.useRef<number>(0);
+  React.useEffect(() => {
+    if (isOpen) {
+      openedAtRef.current = Date.now();
+    }
+  }, [isOpen, activeTab]);
+
   if (!isOpen || !activeTab) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Prevent synthetic ghost clicks within 450ms of opening
+    if (Date.now() - openedAtRef.current < 450) return;
+    onClose();
+  };
 
   return (
     <>
       <div 
         className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-150"
-        onClick={onClose}
+        onClick={handleBackdropClick}
       />
       <aside className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] w-full rounded-t-3xl border-t border-slate-200 dark:border-slate-800 lg:inset-y-0 lg:left-auto lg:right-0 lg:bottom-auto lg:h-full lg:max-h-none lg:w-80 lg:rounded-none lg:border-t-0 lg:border-l bg-white dark:bg-slate-900 flex flex-col shadow-2xl lg:shadow-lg shrink-0 transition-all animate-in slide-in-from-bottom lg:slide-in-from-right duration-200 overflow-hidden">
         {/* Mobile handle indicator */}

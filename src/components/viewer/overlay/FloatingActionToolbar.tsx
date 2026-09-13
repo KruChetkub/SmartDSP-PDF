@@ -46,6 +46,7 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => {
               e.stopPropagation();
+              if (e.cancelable) e.preventDefault();
               onEdit(e);
             }}
             onClick={(e) => {
@@ -70,6 +71,7 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => {
           e.stopPropagation();
+          if (e.cancelable) e.preventDefault();
           onDelete(e);
         }}
         onClick={(e) => {

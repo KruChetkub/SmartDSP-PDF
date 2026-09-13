@@ -156,7 +156,6 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
                 onStartDrag={(e) => onStartDrag(e, item)}
                 onEdit={() => {
                   onOpenInspector?.();
-                  onStartEditing(item.id);
                 }}
                 onDelete={() => {
                   onDeleteText(item.id);

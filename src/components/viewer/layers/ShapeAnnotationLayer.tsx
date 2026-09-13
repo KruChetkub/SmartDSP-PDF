@@ -303,9 +303,6 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
                 onStartDrag={(e) => onStartDrag(e, shape)}
                 onEdit={() => {
                   onOpenInspector?.();
-                  if (shape.type === 'note' || shape.type === 'stamp') {
-                    onStartEditingShape(shape.id);
-                  }
                 }}
                 onDelete={() => {
                   onDeleteShape(shape.id);
