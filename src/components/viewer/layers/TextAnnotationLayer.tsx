@@ -150,10 +150,14 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
               </span>
             )}
 
-            {/* Floating Action Toolbar: Move and Delete */}
+            {/* Floating Action Toolbar: Move, Edit, and Delete */}
             {isSelected && !isEditing && toolMode !== 'pan' && (
               <FloatingActionToolbar
                 onStartDrag={(e) => onStartDrag(e, item)}
+                onEdit={() => {
+                  onOpenInspector?.();
+                  onStartEditing(item.id);
+                }}
                 onDelete={() => {
                   onDeleteText(item.id);
                   onSelectText(null);

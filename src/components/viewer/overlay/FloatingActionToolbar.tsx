@@ -1,13 +1,9 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (c) 2026 Sittichat Pothising
-// OpenJPDF - PDF Editor (Web)
-// FloatingActionToolbar.tsx - Floating Move & Delete action toolbar above selected elements
-
 import React from 'react';
-import { Move, Trash2 } from 'lucide-react';
+import { Move, Trash2, Pencil } from 'lucide-react';
 
 interface FloatingActionToolbarProps {
-  onStartDrag: (e: React.MouseEvent | React.TouchEvent) => void;
+  onStartDrag?: (e: React.MouseEvent | React.TouchEvent) => void;
+  onEdit?: (e: React.MouseEvent | React.TouchEvent) => void;
   onDelete: (e: React.MouseEvent | React.TouchEvent) => void;
   accentColor?: string;
   isBottom?: boolean;
@@ -15,6 +11,7 @@ interface FloatingActionToolbarProps {
 
 export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
   onStartDrag,
+  onEdit,
   onDelete,
   accentColor = '#d946ef',
   isBottom = false,
@@ -28,15 +25,42 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
       onTouchStart={(e) => e.stopPropagation()}
     >
       {/* Drag Move Handle */}
-      <div
-        onMouseDown={onStartDrag}
-        onTouchStart={onStartDrag}
-        className="px-1.5 py-0.5 hover:bg-slate-700 active:scale-95 rounded text-slate-300 hover:text-white cursor-move transition-colors flex items-center gap-1 text-xs"
-        title="คลิกลากเพื่อย้ายตำแหน่ง"
-      >
-        <Move className="w-3.5 h-3.5" style={{ color: accentColor }} />
-        <span className="text-[11px] text-slate-300 font-medium">ย้าย</span>
-      </div>
+      {onStartDrag && (
+        <div
+          onMouseDown={onStartDrag}
+          onTouchStart={onStartDrag}
+          className="px-1.5 py-0.5 hover:bg-slate-700 active:scale-95 rounded text-slate-300 hover:text-white cursor-move transition-colors flex items-center gap-1 text-xs"
+          title="คลิกลากเพื่อย้ายตำแหน่ง"
+        >
+          <Move className="w-3.5 h-3.5" style={{ color: accentColor }} />
+          <span className="text-[11px] text-slate-300 font-medium">ย้าย</span>
+        </div>
+      )}
+
+      {/* Edit Button (Before Delete) */}
+      {onEdit && (
+        <>
+          {onStartDrag && <div className="w-[1px] h-3.5 bg-slate-700" />}
+          <button
+            type="button"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              onEdit(e);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onEdit(e);
+            }}
+            className="px-1.5 py-0.5 hover:bg-slate-700 active:scale-95 rounded text-pink-400 hover:text-pink-300 cursor-pointer transition-colors flex items-center gap-1 text-xs"
+            title="แก้ไขคุณสมบัติ / เปิดแผงแก้ไข"
+          >
+            <Pencil className="w-3.5 h-3.5 text-pink-400" />
+            <span className="text-[11px] font-medium text-pink-300">แก้ไข</span>
+          </button>
+        </>
+      )}
 
       <div className="w-[1px] h-3.5 bg-slate-700" />
 

@@ -92,10 +92,11 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
               draggable={false}
             />
 
-            {/* Floating Action Toolbar: Move and Delete */}
+            {/* Floating Action Toolbar: Move, Edit, and Delete */}
             {isSelected && toolMode !== 'pan' && (
               <FloatingActionToolbar
                 onStartDrag={(e) => onStartDrag(e, img)}
+                onEdit={() => onOpenInspector?.()}
                 onDelete={() => {
                   onDeleteImage(img.id);
                   onSelectImage(null);

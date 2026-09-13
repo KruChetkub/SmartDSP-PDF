@@ -297,9 +297,16 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
             )}
 
             {/* Floating Action Toolbar: Move and Delete */}
+            {/* Floating Action Toolbar: Move, Edit, and Delete */}
             {isSelected && toolMode !== 'pan' && (
               <FloatingActionToolbar
                 onStartDrag={(e) => onStartDrag(e, shape)}
+                onEdit={() => {
+                  onOpenInspector?.();
+                  if (shape.type === 'note' || shape.type === 'stamp') {
+                    onStartEditingShape(shape.id);
+                  }
+                }}
                 onDelete={() => {
                   onDeleteShape(shape.id);
                   onSelectShape?.(null);
