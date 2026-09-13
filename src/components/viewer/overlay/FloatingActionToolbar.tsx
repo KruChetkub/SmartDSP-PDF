@@ -43,15 +43,10 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
           {onStartDrag && <div className="w-[1px] h-3.5 bg-slate-700" />}
           <button
             type="button"
+            style={{ touchAction: 'manipulation' }}
             onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              if (e.cancelable) e.preventDefault();
-              onEdit(e);
-            }}
             onClick={(e) => {
               e.stopPropagation();
-              e.preventDefault();
               onEdit(e);
             }}
             className="px-1.5 py-0.5 hover:bg-slate-700 active:scale-95 rounded text-pink-400 hover:text-pink-300 cursor-pointer transition-colors flex items-center gap-1 text-xs"
@@ -68,15 +63,10 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
       {/* Delete Button */}
       <button
         type="button"
+        style={{ touchAction: 'manipulation' }}
         onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => {
-          e.stopPropagation();
-          if (e.cancelable) e.preventDefault();
-          onDelete(e);
-        }}
         onClick={(e) => {
           e.stopPropagation();
-          e.preventDefault();
           onDelete(e);
         }}
         className="px-1.5 py-0.5 hover:bg-red-600 active:scale-95 rounded text-red-400 hover:text-white cursor-pointer transition-colors flex items-center gap-1 text-xs"
