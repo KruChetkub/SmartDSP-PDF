@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { UploadCloud, FileText, ShieldCheck, Type, Combine } from 'lucide-react';
 import { AppLanguage } from '../../types/settings';
 import { t } from '../../i18n/translations';
@@ -10,6 +10,7 @@ interface DropZoneProps {
 
 export const DropZone: React.FC<DropZoneProps> = ({ onFileSelected, language = 'th' }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -37,8 +38,26 @@ export const DropZone: React.FC<DropZoneProps> = ({ onFileSelected, language = '
     }
   };
 
+  const handleSelectFileClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <div className="flex-1 overflow-y-auto flex flex-col items-center py-10 px-6 select-none bg-slate-100 dark:bg-slate-950 transition-colors">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        onChange={handleInputChange}
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
+      />
+
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -60,18 +79,15 @@ export const DropZone: React.FC<DropZoneProps> = ({ onFileSelected, language = '
           {t('dropSubtitle', language)}
         </p>
 
-        <label className="cursor-pointer">
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={handleInputChange}
-            className="hidden"
-          />
-          <span className="px-6 py-2.5 rounded-lg bg-pink-600 hover:bg-pink-700 text-white font-medium text-sm transition-colors shadow-sm inline-flex items-center gap-2 cursor-pointer">
-            <FileText className="w-4 h-4" />
-            {t('dropSelectBtn', language)}
-          </span>
-        </label>
+        <button
+          type="button"
+          onClick={handleSelectFileClick}
+          style={{ touchAction: 'manipulation' }}
+          className="px-6 py-2.5 rounded-lg bg-pink-600 hover:bg-pink-700 active:bg-pink-800 text-white font-medium text-sm transition-colors shadow-sm inline-flex items-center gap-2 cursor-pointer select-text"
+        >
+          <FileText className="w-4 h-4" />
+          {t('dropSelectBtn', language)}
+        </button>
       </div>
 
       {/* Feature highlights */}

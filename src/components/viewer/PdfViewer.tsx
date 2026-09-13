@@ -79,6 +79,9 @@ interface PdfViewerProps {
   disableLatinSpacing?: boolean;
   language?: AppLanguage;
   onZoomChange?: (newZoom: number) => void;
+  onNextPage?: () => void;
+  onPrevPage?: () => void;
+  totalPages?: number;
 }
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
@@ -121,6 +124,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   disableLatinSpacing = false,
   language = 'th',
   onZoomChange,
+  onNextPage,
+  onPrevPage,
+  totalPages = 1,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -129,46 +135,87 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   // Pan scroll hook
   const { scrollContainerRef, isPanning, handlePanMouseDown, handlePanTouchStart } = usePanScroll(toolMode);
 
-  // Touch Pinch-to-zoom support
+  // ─── Touch: Pinch-to-zoom (CSS transform — no re-render during pinch) + Swipe page ───
   const touchPinchRef = useRef<{ initialDistance: number; initialZoom: number } | null>(null);
+  const swipeTouchRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
-    if (!el || !onZoomChange) return;
+    const inner = containerRef.current;
+    if (!el) return;
+
+    const getDistance = (touches: TouchList) =>
+      Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+      );
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 2) {
-        const dist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        touchPinchRef.current = { initialDistance: dist, initialZoom: zoom };
+        // Start pinch
+        touchPinchRef.current = { initialDistance: getDistance(e.touches), initialZoom: zoom };
+        swipeTouchRef.current = null; // Cancel any swipe
+      } else if (e.touches.length === 1) {
+        // Track swipe start
+        swipeTouchRef.current = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY,
+          time: Date.now(),
+        };
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2 && touchPinchRef.current) {
+      if (e.touches.length === 2 && touchPinchRef.current && inner) {
         e.preventDefault();
-        const dist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        if (touchPinchRef.current.initialDistance > 0) {
-          const factor = dist / touchPinchRef.current.initialDistance;
-          const newZoom = Math.min(2.5, Math.max(0.4, Number((touchPinchRef.current.initialZoom * factor).toFixed(2))));
-          onZoomChange(newZoom);
-        }
+        const factor = getDistance(e.touches) / touchPinchRef.current.initialDistance;
+        const clampedFactor = Math.min(2.5 / zoom, Math.max(0.4 / zoom, factor));
+        // Apply CSS scale directly — zero React re-renders during pinch
+        inner.style.transform = `scale(${clampedFactor})`;
+        inner.style.transformOrigin = 'center top';
       }
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (e: TouchEvent) => {
+      // Commit pinch zoom
+      if (touchPinchRef.current && inner && inner.style.transform !== '' && inner.style.transform !== 'none') {
+        const currentTransform = inner.style.transform;
+        const match = currentTransform.match(/scale\(([^)]+)\)/);
+        if (match && onZoomChange) {
+          const visualFactor = parseFloat(match[1]);
+          const newZoom = Math.min(2.5, Math.max(0.4, Number((touchPinchRef.current.initialZoom * visualFactor).toFixed(2))));
+          inner.style.transform = 'none';
+          onZoomChange(newZoom); // One re-render at the end
+        } else {
+          inner.style.transform = 'none';
+        }
+        touchPinchRef.current = null;
+        swipeTouchRef.current = null;
+        return;
+      }
       touchPinchRef.current = null;
+
+      // Swipe to change page (1 finger, horizontal, zoom near fit level)
+      if (swipeTouchRef.current && e.changedTouches.length === 1) {
+        const dx = e.changedTouches[0].clientX - swipeTouchRef.current.x;
+        const dy = Math.abs(e.changedTouches[0].clientY - swipeTouchRef.current.y);
+        const dt = Date.now() - swipeTouchRef.current.time;
+        // Swipe: at least 60px horizontal, mostly horizontal, within 400ms, and page fits screen (zoom ≤ 1.1)
+        if (Math.abs(dx) > 60 && dy < 80 && dt < 400 && zoom <= 1.15) {
+          if (dx < 0 && currentPageIndex < totalPages - 1) {
+            onNextPage?.(); // Swipe left → next page
+          } else if (dx > 0 && currentPageIndex > 0) {
+            onPrevPage?.(); // Swipe right → prev page
+          }
+        }
+      }
+      swipeTouchRef.current = null;
     };
 
     el.addEventListener('touchstart', handleTouchStart, { passive: true });
     el.addEventListener('touchmove', handleTouchMove, { passive: false });
-    el.addEventListener('touchend', handleTouchEnd);
-    el.addEventListener('touchcancel', handleTouchEnd);
+    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    el.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     return () => {
       el.removeEventListener('touchstart', handleTouchStart);
@@ -176,7 +223,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       el.removeEventListener('touchend', handleTouchEnd);
       el.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [zoom, onZoomChange]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoom, onZoomChange, onNextPage, onPrevPage, currentPageIndex, totalPages]);
+
 
   // Drag moving & 8-point resizing hook
   const { setDragItem, setResizeItem } = useAnnotationInteraction({

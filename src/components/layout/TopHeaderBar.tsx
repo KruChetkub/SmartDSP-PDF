@@ -29,7 +29,7 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({
   onOpenMobileTools,
 }) => {
   return (
-    <div className="h-11 px-2.5 sm:px-3 bg-[#fbfbfb] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between select-none z-40 transition-colors">
+    <div className="relative z-40 h-11 px-2.5 sm:px-3 bg-[#fbfbfb] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between select-none transition-colors">
       {/* Left: Logo & Branding */}
       <div className="flex items-center gap-2">
         <div className="w-7 h-7 flex items-center justify-center shrink-0">

@@ -105,7 +105,12 @@ export const App: React.FC = () => {
   const [currentSearchMatchIndex, setCurrentSearchMatchIndex] = useState<number>(0);
 
   // Left Sidebar State (Thumbnails, Bookmarks, Layers, Attachments)
-  const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab | null>('thumbnails');
+  const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab | null>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      return null;
+    }
+    return 'thumbnails';
+  });
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
 
@@ -395,6 +400,12 @@ export const App: React.FC = () => {
       setSelectedTextAnnotationId(null);
       setSelectedShapeId(null);
       setPdfMetadata({});
+
+      // On mobile/tablet, ensure sidebars are closed so the document takes the full screen
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setLeftSidebarTab(null);
+        setRightSidebarTab(null);
+      }
 
       // Check encryption status in background
       checkIsPdfEncrypted(new Uint8Array(safeBytes))
@@ -831,14 +842,42 @@ export const App: React.FC = () => {
   const handleZoomIn = () => setZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))));
   const handleZoomOut = () => setZoom((z) => Math.max(0.5, Number((z - 0.15).toFixed(2))));
   const handleResetZoom = () => setZoom(1.0);
+
+  // Auto fit-to-page on mobile when a new PDF is opened
+  useEffect(() => {
+    if (!pdfDoc || !isMobile || pages.length === 0) return;
+    const timer = setTimeout(() => {
+      const pageWidth = pages[0]?.width || 595;
+      const pageHeight = pages[0]?.height || 842;
+      const availableWidth = window.innerWidth - 16;
+      const availableHeight = window.innerHeight - 44 - 56 - 24; // TopBar + MobileBar + padding
+      const fitScale = Math.min(
+        availableWidth / pageWidth,
+        availableHeight / pageHeight,
+        2.5
+      );
+      setZoom(Math.max(0.3, Number(fitScale.toFixed(2))));
+    }, 150); // wait for render
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pdfDoc]);
+
   const handleFitWidth = useCallback(() => {
     if (!pages[currentPageIndex]) return;
     const pageWidth = pages[currentPageIndex].width || 595;
-    const containerWidth = window.innerWidth < 768 
-      ? window.innerWidth - 16 
-      : window.innerWidth - (leftSidebarTab ? 350 : 100);
-    const fitScale = Math.min(2.5, Math.max(0.3, Number((containerWidth / pageWidth).toFixed(2))));
-    setZoom(fitScale);
+    const pageHeight = pages[currentPageIndex].height || 842;
+    const isMobileScreen = window.innerWidth < 768;
+    const sidebarOffset = leftSidebarTab ? 350 : (isMobileScreen ? 0 : 100);
+    const headerOffset = isMobileScreen ? 44 + 56 : 44 + 88; // TopBar + (MobileBar or Ribbon)
+    const availableWidth = window.innerWidth - sidebarOffset - (isMobileScreen ? 16 : 64);
+    const availableHeight = window.innerHeight - headerOffset - (isMobileScreen ? 24 : 64);
+    const fitByWidth = availableWidth / pageWidth;
+    const fitByHeight = availableHeight / pageHeight;
+    // On mobile: fit the whole page (fit-to-page), on desktop: fit width
+    const fitScale = isMobileScreen
+      ? Math.min(fitByWidth, fitByHeight)
+      : fitByWidth;
+    setZoom(Math.min(2.5, Math.max(0.3, Number(fitScale.toFixed(2)))));
   }, [pages, currentPageIndex, leftSidebarTab]);
 
   // Export PDF with all edits
@@ -1601,6 +1640,9 @@ export const App: React.FC = () => {
               pages={pages}
               zoom={zoom}
               onZoomChange={setZoom}
+              onNextPage={() => setCurrentPageIndex((p) => Math.min(pages.length - 1, p + 1))}
+              onPrevPage={() => setCurrentPageIndex((p) => Math.max(0, p - 1))}
+              totalPages={pages.length}
               toolMode={toolMode}
               fontFamily={fontFamily}
               fontSize={fontSize}

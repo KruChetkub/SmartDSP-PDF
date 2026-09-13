@@ -53,14 +53,17 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
   if (!hasDocument) return null;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex items-center justify-between shadow-lg select-none">
+    <div 
+      style={{ touchAction: 'manipulation' }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex items-center justify-between shadow-lg select-none"
+    >
       {/* 1. Page navigation & Thumbnails Drawer trigger */}
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={onPrevPage}
           disabled={currentPageIndex <= 0}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           title="หน้าก่อนหน้า"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -69,7 +72,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={onOpenThumbnails}
-          className="h-9 px-2.5 flex items-center gap-1.5 rounded-lg bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 font-semibold text-xs border border-pink-200 dark:border-pink-800/60 shadow-2xs active:scale-95 transition-all"
+          className="h-9 px-2.5 flex items-center gap-1.5 rounded-lg bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 font-semibold text-xs border border-pink-200 dark:border-pink-800/60 shadow-2xs active:scale-95 transition-all cursor-pointer"
           title="ดูหน้าทั้งหมด"
         >
           <FileText className="w-4 h-4" />
@@ -80,7 +83,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           type="button"
           onClick={onNextPage}
           disabled={currentPageIndex >= totalPages - 1}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:pointer-events-none hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           title="หน้าถัดไป"
         >
           <ChevronRight className="w-5 h-5" />
@@ -92,7 +95,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTool('select')}
-          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
             toolMode === 'select'
               ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-xs font-semibold'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -105,7 +108,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTool('pan')}
-          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
             toolMode === 'pan'
               ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-xs font-semibold'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -118,7 +121,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTool('draw')}
-          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
             toolMode === 'draw'
               ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-xs font-semibold'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -131,7 +134,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTool('text')}
-          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
             toolMode === 'text'
               ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-xs font-semibold'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -144,7 +147,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={() => onSelectTool('stamp')}
-          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+          className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
             toolMode === 'stamp'
               ? 'bg-white dark:bg-slate-700 text-pink-600 dark:text-pink-400 shadow-xs font-semibold'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -160,8 +163,8 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={onFitWidth}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
-          title="ปรับพอดีความกว้างหน้าจอ"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 cursor-pointer"
+          title="ปรับพอดีหน้าจอ"
         >
           <Maximize2 className="w-4 h-4" />
         </button>
@@ -169,7 +172,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={onSavePdf}
-          className="w-9 h-9 flex items-center justify-center rounded-lg bg-pink-600 hover:bg-pink-700 text-white shadow-xs transition-colors active:scale-95"
+          className="w-9 h-9 flex items-center justify-center rounded-lg bg-pink-600 hover:bg-pink-700 text-white shadow-xs transition-colors active:scale-95 cursor-pointer"
           title="บันทึกเอกสาร PDF"
         >
           <Download className="w-4 h-4" />
@@ -178,7 +181,7 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
         <button
           type="button"
           onClick={onOpenMoreMenu}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95 cursor-pointer"
           title="เครื่องมือเพิ่มเติม"
         >
           <MoreHorizontal className="w-5 h-5" />
