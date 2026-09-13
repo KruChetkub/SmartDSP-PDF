@@ -75,6 +75,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, languag
                 <p className="text-slate-500 dark:text-slate-400 mt-0.5">
                   สิทธิชาติ โปธิสิงห์ (Sittichat Pothising)
                 </p>
+                <p className="text-slate-500 dark:text-slate-400">
+                  นายพิเชษฐ์ ศรีพิชัย (Pichet Sripichai)
+                </p>
               </div>
             </div>
           </div>
@@ -88,7 +91,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose, languag
         {/* Footer */}
         <div className="px-6 py-4 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <a
-            href="https://github.com"
+            href="https://github.com/KruChetkub/SmartDSP-PDF"
             target="_blank"
             rel="noreferrer"
             className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1.5"

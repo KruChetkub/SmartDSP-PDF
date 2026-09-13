@@ -115,6 +115,6 @@ git push -u origin main
 ## ⚖️ ใบอนุญาต (License)
 
 OpenJPDF Web เผยแพร่ภายใต้ใบอนุญาต **GNU Affero General Public License v3 (AGPLv3)**  
-พัฒนาต่อยอดจาก OpenJPDF โดย **สิทธิชาติ โปธิสิงห์ (Sittichat Pothising)**  
+พัฒนาต่อยอดจาก OpenJPDF และ สิทธิชาติ โปธิสิงห์ (Sittichat Pothising) โดย **นายพิเชษฐ์ ศรีพิชัย (Pichet Sripichai)**  
 *พัฒนาขึ้นเพื่อสร้างประโยชน์ให้แก่สังคมโดยไม่มีค่าใช้จ่าย*
 

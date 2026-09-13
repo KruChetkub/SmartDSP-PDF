@@ -38,7 +38,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onFileSelected, language = '
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 select-none bg-slate-100 dark:bg-slate-950 transition-colors">
+    <div className="flex-1 overflow-y-auto flex flex-col items-center py-10 px-6 select-none bg-slate-100 dark:bg-slate-950 transition-colors">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
