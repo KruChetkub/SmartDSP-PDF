@@ -320,7 +320,10 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
                   onStartEditingShape(null);
                 }}
                 accentColor="#d946ef"
-                isBottom={shape.y * zoom < 40}
+                rotation={shape.rotation || 0}
+                itemWidth={shape.width * zoom}
+                itemHeight={shape.height * zoom}
+                pageTopY={shape.y * zoom}
               />
             )}
 

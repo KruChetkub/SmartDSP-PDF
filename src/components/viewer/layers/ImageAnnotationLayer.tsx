@@ -115,7 +115,10 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
                   onSelectImage(null);
                 }}
                 accentColor="#d946ef"
-                isBottom={img.y * zoom < 40}
+                rotation={img.rotation || 0}
+                itemWidth={img.width * zoom}
+                itemHeight={img.height * zoom}
+                pageTopY={img.y * zoom}
               />
             )}
 

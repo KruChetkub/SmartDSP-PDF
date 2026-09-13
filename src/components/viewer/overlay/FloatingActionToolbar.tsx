@@ -13,6 +13,10 @@ interface FloatingActionToolbarProps {
   onDelete: (e: React.MouseEvent | React.TouchEvent) => void;
   accentColor?: string;
   isBottom?: boolean;
+  rotation?: number;
+  itemWidth?: number;
+  itemHeight?: number;
+  pageTopY?: number;
 }
 
 export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
@@ -22,12 +26,38 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
   onDelete,
   accentColor = '#d946ef',
   isBottom = false,
+  rotation = 0,
+  itemWidth = 100,
+  itemHeight = 40,
+  pageTopY,
 }) => {
+  const rot = rotation || 0;
+  const rad = (rot * Math.PI) / 180;
+
+  // Calculate visual half-height of the rotated bounding box in screen pixels
+  const halfW = (itemWidth || 100) / 2;
+  const halfH = (itemHeight || 40) / 2;
+  const visualHalfHeight =
+    Math.abs(halfW * Math.sin(rad)) + Math.abs(halfH * Math.cos(rad));
+
+  // Determine whether to position above or below the box
+  const shouldFlipToBottom =
+    isBottom ||
+    (pageTopY !== undefined && pageTopY + halfH - visualHalfHeight < 55);
+
+  const offsetY = shouldFlipToBottom
+    ? Math.round(visualHalfHeight + 14)
+    : -Math.round(visualHalfHeight + 44);
+
   return (
     <div
-      className={`absolute ${
-        isBottom ? '-bottom-9' : '-top-9'
-      } right-0 flex items-center bg-slate-900/95 text-white rounded-lg shadow-xl px-2 py-0.5 z-50 select-none backdrop-blur-xs border border-slate-700/80 gap-1.5 animate-in fade-in zoom-in-95 duration-75`}
+      className="absolute flex items-center bg-slate-900/95 text-white rounded-lg shadow-xl px-2 py-0.5 z-50 select-none backdrop-blur-xs border border-slate-700/80 gap-1.5 animate-in fade-in zoom-in-95 duration-75 whitespace-nowrap pointer-events-auto"
+      style={{
+        left: '50%',
+        top: '50%',
+        transform: `rotate(${-rot}deg) translate(-50%, ${offsetY}px)`,
+        transformOrigin: '0 0',
+      }}
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >

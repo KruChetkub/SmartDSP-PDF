@@ -195,7 +195,16 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
                   onSelectText(null);
                 }}
                 accentColor="#d946ef"
-                isBottom={item.y * zoom < 40}
+                rotation={item.rotation || 0}
+                itemWidth={(() => {
+                  const el = typeof document !== 'undefined' ? document.getElementById(`text-${item.id}`) : null;
+                  return el ? el.offsetWidth : Math.max(80, item.text.length * item.fontSize * 0.6 * zoom);
+                })()}
+                itemHeight={(() => {
+                  const el = typeof document !== 'undefined' ? document.getElementById(`text-${item.id}`) : null;
+                  return el ? el.offsetHeight : item.fontSize * 1.5 * zoom;
+                })()}
+                pageTopY={item.y * zoom}
               />
             )}
           </div>
