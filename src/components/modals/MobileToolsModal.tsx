@@ -21,8 +21,18 @@ import {
   Info,
   RotateCw,
   RotateCcw,
-  Printer
+  Printer,
+  Square,
+  Circle,
+  Minus,
+  ArrowRight,
+  EyeOff,
+  StickyNote,
+  FileEdit,
+  Copy,
+  Trash2
 } from 'lucide-react';
+import { ToolMode } from '../../types';
 import { AppLanguage } from '../../types/settings';
 import { t } from '../../i18n/translations';
 
@@ -45,6 +55,9 @@ interface MobileToolsModalProps {
   onPrint: () => void;
   onOpenSettings: () => void;
   onOpenAbout: () => void;
+  onSelectTool?: (tool: ToolMode) => void;
+  onDuplicatePage?: () => void;
+  onDeletePage?: () => void;
   language?: AppLanguage;
 }
 
@@ -67,15 +80,18 @@ export const MobileToolsModal: React.FC<MobileToolsModalProps> = ({
   onPrint,
   onOpenSettings,
   onOpenAbout,
+  onSelectTool,
+  onDuplicatePage,
+  onDeletePage,
   language = 'th',
 }) => {
   const imageInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
-  const handleAction = (fn: () => void) => {
+  const handleAction = (fn?: () => void) => {
     onClose();
-    fn();
+    if (fn) fn();
   };
 
   const handleTriggerImage = () => {
@@ -96,8 +112,17 @@ export const MobileToolsModal: React.FC<MobileToolsModalProps> = ({
     { label: t('signatureModalTitle', language) || 'เซ็นลายเซ็น', icon: PenLine, color: 'text-pink-600 bg-pink-50 dark:bg-pink-950/40', action: onOpenSignature },
     { label: t('insertImage', language) || 'แทรกรูปภาพ', icon: ImageIcon, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40', action: handleTriggerImage },
     { label: t('insertBlankPage', language) || 'แทรกหน้าใหม่', icon: FilePlus, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/40', action: onAddBlankPage },
+    { label: 'สี่เหลี่ยม', icon: Square, color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/40', action: () => onSelectTool?.('rect') },
+    { label: 'วงกลม', icon: Circle, color: 'text-purple-600 bg-purple-50 dark:bg-purple-950/40', action: () => onSelectTool?.('circle') },
+    { label: 'เส้นตรง', icon: Minus, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40', action: () => onSelectTool?.('line') },
+    { label: 'ลูกศร', icon: ArrowRight, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40', action: () => onSelectTool?.('arrow') },
+    { label: 'ปกปิด (Redact)', icon: EyeOff, color: 'text-red-600 bg-red-50 dark:bg-red-950/40', action: () => onSelectTool?.('redact') },
+    { label: 'กระดาษโน้ต', icon: StickyNote, color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/40', action: () => onSelectTool?.('note') },
+    { label: 'แก้ข้อความใน PDF', icon: FileEdit, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40', action: () => onSelectTool?.('editText') },
     { label: 'หมุนซ้าย 90°', icon: RotateCcw, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950/40', action: onRotateLeft },
     { label: 'หมุนขวา 90°', icon: RotateCw, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950/40', action: onRotateRight },
+    { label: 'ทำซ้ำหน้านี้', icon: Copy, color: 'text-teal-600 bg-teal-50 dark:bg-teal-950/40', action: onDuplicatePage },
+    { label: 'ลบหน้านี้', icon: Trash2, color: 'text-rose-600 bg-rose-50 dark:bg-rose-950/40', action: onDeletePage },
     { label: t('merge', language) || 'รวมไฟล์ PDF', icon: Combine, color: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40', action: onOpenMerge },
     { label: t('split', language) || 'แยกเอกสาร', icon: Scissors, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40', action: onOpenSplit },
     { label: t('compressPdf', language) || 'ลดขนาดไฟล์', icon: FileDown, color: 'text-violet-600 bg-violet-50 dark:bg-violet-950/40', action: onOpenCompress },

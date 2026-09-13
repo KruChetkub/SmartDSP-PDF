@@ -18,7 +18,7 @@ interface TextAnnotationLayerProps {
   onStartEditing: (id: string | null) => void;
   onUpdateText: (text: TextAnnotation) => void;
   onDeleteText: (id: string) => void;
-  onStartDrag: (e: React.MouseEvent, item: TextAnnotation) => void;
+  onStartDrag: (e: React.MouseEvent | React.TouchEvent, item: TextAnnotation) => void;
 }
 
 export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
@@ -53,6 +53,15 @@ export const TextAnnotationLayer: React.FC<TextAnnotationLayerProps> = ({
               onSelectText(item.id);
 
               // Allow dragging by clicking anywhere on the text box when not typing in textarea
+              if (!isEditing) {
+                onStartDrag(e, item);
+              }
+            }}
+            onTouchStart={(e) => {
+              if (toolMode === 'pan' || toolMode === 'selectText') return;
+              e.stopPropagation();
+              onSelectText(item.id);
+
               if (!isEditing) {
                 onStartDrag(e, item);
               }

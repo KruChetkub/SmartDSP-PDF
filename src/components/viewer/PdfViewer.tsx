@@ -639,6 +639,185 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   };
 
+  // ─── Touch Overlay Handlers for Drawing, Text, Stamp, Note, Shapes on Mobile ───
+  const handleOverlayTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (toolMode === 'pan' || toolMode === 'selectText') return;
+    if (!containerRef.current || e.touches.length !== 1) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const clickX = (touch.clientX - rect.left) / zoom;
+    const clickY = (touch.clientY - rect.top) / zoom;
+
+    if (toolMode === 'text') {
+      const newText: TextAnnotation = {
+        id: `text-${Date.now()}`,
+        pageIndex: currentPageIndex,
+        text: 'เพิ่มข้อความ',
+        x: Math.round(clickX),
+        y: Math.round(clickY),
+        fontSize: fontSize || 14,
+        color: color || '#000000',
+        fontFamily: fontFamily || 'TH Sarabun PSK',
+        lineHeight: 1.2,
+        opacity: 1.0,
+        textAlign: 'left',
+      };
+      onAddText(newText);
+      onSelectTextAnnotation(newText.id);
+      onSelectExtractedBlock(null);
+      setSelectedImageId(null);
+      setEditingTextId(null);
+      onSelectTool?.('select');
+    } else if (toolMode === 'note') {
+      const newNote: TextAnnotation = {
+        id: `text-${Date.now()}`,
+        pageIndex: currentPageIndex,
+        text: 'โน้ต: ข้อความบันทึก',
+        x: Math.round(clickX),
+        y: Math.round(clickY),
+        fontSize: 14,
+        color: '#854d0e',
+        fontFamily: 'TH Sarabun New',
+        lineHeight: 1.2,
+        opacity: 1.0,
+        textAlign: 'left',
+      };
+      onAddText(newNote);
+      onSelectTextAnnotation(newNote.id);
+      onSelectExtractedBlock(null);
+      setSelectedImageId(null);
+      setEditingTextId(null);
+      onSelectTool?.('select');
+    } else if (toolMode === 'stamp') {
+      const newStamp: TextAnnotation = {
+        id: `text-${Date.now()}`,
+        pageIndex: currentPageIndex,
+        text: '[ ตรวจสอบแล้ว / APPROVED ]',
+        x: Math.round(clickX),
+        y: Math.round(clickY),
+        fontSize: 16,
+        color: '#dc2626',
+        fontFamily: 'TH Sarabun New',
+        isBold: true,
+        lineHeight: 1.2,
+        opacity: 0.9,
+        textAlign: 'center',
+      };
+      onAddText(newStamp);
+      onSelectTextAnnotation(newStamp.id);
+      onSelectExtractedBlock(null);
+      setSelectedImageId(null);
+      setEditingTextId(null);
+      onSelectTool?.('select');
+    } else if (toolMode === 'draw') {
+      setIsDrawing(true);
+      setCurrentStroke([{ x: clickX, y: clickY }]);
+    } else if (
+      toolMode === 'rect' ||
+      toolMode === 'circle' ||
+      toolMode === 'ellipse' ||
+      toolMode === 'line' ||
+      toolMode === 'arrow' ||
+      toolMode === 'redact'
+    ) {
+      setShapeStart({ x: clickX, y: clickY });
+      setShapeCurrent({ x: clickX, y: clickY });
+    } else if (toolMode === 'select' || toolMode === 'editText') {
+      if (e.target === containerRef.current || e.target === drawCanvasRef.current) {
+        onSelectTextAnnotation(null);
+        onSelectExtractedBlock(null);
+        setSelectedImageId(null);
+        onSelectShape?.(null);
+        setEditingTextId(null);
+        setEditingExtractedId(null);
+        setEditingShapeId(null);
+      }
+    }
+  };
+
+  const handleOverlayTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current || e.touches.length !== 1) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const currentX = (touch.clientX - rect.left) / zoom;
+    const currentY = (touch.clientY - rect.top) / zoom;
+
+    if (isDrawing && toolMode === 'draw') {
+      if (e.cancelable) e.preventDefault();
+      setCurrentStroke((prev) => [...prev, { x: currentX, y: currentY }]);
+    } else if (shapeStart) {
+      if (e.cancelable) e.preventDefault();
+      setShapeCurrent({ x: currentX, y: currentY });
+    }
+  };
+
+  const handleOverlayTouchEnd = () => {
+    if (isDrawing && toolMode === 'draw') {
+      setIsDrawing(false);
+      if (currentStroke.length > 1) {
+        onAddDrawing({
+          id: `draw-${Date.now()}`,
+          pageIndex: currentPageIndex,
+          points: currentStroke,
+          color: color,
+          strokeWidth: strokeWidth,
+        });
+      }
+      setCurrentStroke([]);
+    }
+
+    if (
+      shapeStart &&
+      shapeCurrent &&
+      (toolMode === 'rect' ||
+        toolMode === 'circle' ||
+        toolMode === 'ellipse' ||
+        toolMode === 'line' ||
+        toolMode === 'arrow' ||
+        toolMode === 'redact')
+    ) {
+      const isRedact = toolMode === 'redact';
+      let x = Math.min(shapeStart.x, shapeCurrent.x);
+      let y = Math.min(shapeStart.y, shapeCurrent.y);
+      let width = Math.abs(shapeCurrent.x - shapeStart.x);
+      let height = Math.abs(shapeCurrent.y - shapeStart.y);
+
+      if (width <= 5 && height <= 5) {
+        if (isRedact) {
+          width = 200;
+          height = 45;
+          x = Math.max(0, shapeStart.x - width / 2);
+          y = Math.max(0, shapeStart.y - height / 2);
+        } else {
+          setShapeStart(null);
+          setShapeCurrent(null);
+          return;
+        }
+      }
+
+      const newShapeId = isRedact ? `redact-${Date.now()}` : `shape-${Date.now()}`;
+      onAddShape({
+        id: newShapeId,
+        pageIndex: currentPageIndex,
+        type: toolMode,
+        x: Math.round(x),
+        y: Math.round(y),
+        width: Math.round(width),
+        height: Math.round(height),
+        color: isRedact ? '#ef4444' : color,
+        fillColor: isRedact ? '#ef4444' : undefined,
+        strokeWidth: isRedact ? 2 : strokeWidth,
+        text: isRedact ? (language === 'en' ? 'REDACT' : 'ปกปิด') : undefined,
+        opacity: isRedact ? 0.5 : 1,
+      });
+      onSelectShape?.(newShapeId);
+      onSelectTool?.('select');
+      setShapeStart(null);
+      setShapeCurrent(null);
+    }
+  };
+
   return (
     <div 
       ref={scrollContainerRef}
@@ -676,6 +855,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         onMouseDown={handleOverlayMouseDown}
         onMouseMove={handleOverlayMouseMove}
         onMouseUp={handleOverlayMouseUp}
+        onTouchStart={handleOverlayTouchStart}
+        onTouchMove={handleOverlayTouchMove}
+        onTouchEnd={handleOverlayTouchEnd}
         className="relative bg-white shadow-xl dark:shadow-2xl dark:shadow-black/60 rounded-sm transition-transform duration-75 origin-top"
         style={{
           cursor:
@@ -748,11 +930,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           onUpdateText={onUpdateText}
           onDeleteText={onDeleteText}
           onStartDrag={(e, item) => {
+            const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+            const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
             setDragItem({
               id: item.id,
               type: 'text',
-              mouseStartX: e.clientX,
-              mouseStartY: e.clientY,
+              mouseStartX: clientX,
+              mouseStartY: clientY,
               origX: item.x,
               origY: item.y,
               hasMoved: false,
@@ -774,23 +958,27 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           }}
           onDeleteImage={onDeleteImage}
           onStartDrag={(e, img) => {
+            const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+            const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
             setDragItem({
               id: img.id,
               type: 'image',
-              mouseStartX: e.clientX,
-              mouseStartY: e.clientY,
+              mouseStartX: clientX,
+              mouseStartY: clientY,
               origX: img.x,
               origY: img.y,
               hasMoved: false,
             });
           }}
           onStartResize={(e, img, handle) => {
+            const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+            const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
             setResizeItem({
               id: img.id,
               type: 'image',
               handle,
-              mouseStartX: e.clientX,
-              mouseStartY: e.clientY,
+              mouseStartX: clientX,
+              mouseStartY: clientY,
               origX: img.x,
               origY: img.y,
               origWidth: img.width,
@@ -817,23 +1005,27 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           onUpdateShape={onUpdateShape}
           onDeleteShape={onDeleteShape}
           onStartDrag={(e, shape) => {
+            const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+            const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
             setDragItem({
               id: shape.id,
               type: 'shape',
-              mouseStartX: e.clientX,
-              mouseStartY: e.clientY,
+              mouseStartX: clientX,
+              mouseStartY: clientY,
               origX: shape.x,
               origY: shape.y,
               hasMoved: false,
             });
           }}
           onStartResize={(e, shape, handle) => {
+            const clientX = 'touches' in e && e.touches[0] ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+            const clientY = 'touches' in e && e.touches[0] ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
             setResizeItem({
               id: shape.id,
               type: 'shape',
               handle,
-              mouseStartX: e.clientX,
-              mouseStartY: e.clientY,
+              mouseStartX: clientX,
+              mouseStartY: clientY,
               origX: shape.x,
               origY: shape.y,
               origWidth: shape.width,

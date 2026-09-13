@@ -20,8 +20,8 @@ interface ShapeAnnotationLayerProps {
   onStartEditingShape: (id: string | null) => void;
   onUpdateShape: (shape: ShapeAnnotation) => void;
   onDeleteShape: (id: string) => void;
-  onStartDrag: (e: React.MouseEvent, shape: ShapeAnnotation) => void;
-  onStartResize: (e: React.MouseEvent, shape: ShapeAnnotation, handle: ResizeHandleType) => void;
+  onStartDrag: (e: React.MouseEvent | React.TouchEvent, shape: ShapeAnnotation) => void;
+  onStartResize: (e: React.MouseEvent | React.TouchEvent, shape: ShapeAnnotation, handle: ResizeHandleType) => void;
 }
 
 export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
@@ -49,6 +49,14 @@ export const ShapeAnnotationLayer: React.FC<ShapeAnnotationLayerProps> = ({
             key={shape.id}
             id={`shape-${shape.id}`}
             onMouseDown={(e) => {
+              if (toolMode === 'pan' || toolMode === 'selectText') return;
+              e.stopPropagation();
+              onSelectShape?.(shape.id);
+              if (!isEditing) {
+                onStartDrag(e, shape);
+              }
+            }}
+            onTouchStart={(e) => {
               if (toolMode === 'pan' || toolMode === 'selectText') return;
               e.stopPropagation();
               onSelectShape?.(shape.id);

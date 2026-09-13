@@ -7,8 +7,8 @@ import React from 'react';
 import { Move, Trash2 } from 'lucide-react';
 
 interface FloatingActionToolbarProps {
-  onStartDrag: (e: React.MouseEvent) => void;
-  onDelete: (e: React.MouseEvent) => void;
+  onStartDrag: (e: React.MouseEvent | React.TouchEvent) => void;
+  onDelete: (e: React.MouseEvent | React.TouchEvent) => void;
   accentColor?: string;
   isBottom?: boolean;
 }
@@ -25,10 +25,12 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
         isBottom ? '-bottom-9' : '-top-9'
       } right-0 flex items-center bg-slate-900/95 text-white rounded-lg shadow-xl px-2 py-0.5 z-50 select-none backdrop-blur-xs border border-slate-700/80 gap-1.5 animate-in fade-in zoom-in-95 duration-75`}
       onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
     >
       {/* Drag Move Handle */}
       <div
         onMouseDown={onStartDrag}
+        onTouchStart={onStartDrag}
         className="px-1.5 py-0.5 hover:bg-slate-700 active:scale-95 rounded text-slate-300 hover:text-white cursor-move transition-colors flex items-center gap-1 text-xs"
         title="คลิกลากเพื่อย้ายตำแหน่ง"
       >
@@ -42,6 +44,10 @@ export const FloatingActionToolbar: React.FC<FloatingActionToolbarProps> = ({
       <button
         type="button"
         onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          onDelete(e);
+        }}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();

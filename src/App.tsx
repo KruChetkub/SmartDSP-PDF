@@ -2053,6 +2053,9 @@ export const App: React.FC = () => {
         onPrint={handlePrint}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenAbout={() => setIsAboutOpen(true)}
+        onSelectTool={handleSelectTool}
+        onDuplicatePage={handleDuplicatePage}
+        onDeletePage={() => handleDeletePage()}
         language={settings.language}
       />
     </div>

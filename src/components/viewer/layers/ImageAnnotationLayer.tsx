@@ -16,8 +16,8 @@ interface ImageAnnotationLayerProps {
   zoom: number;
   onSelectImage: (id: string | null) => void;
   onDeleteImage: (id: string) => void;
-  onStartDrag: (e: React.MouseEvent, item: ImageAnnotation) => void;
-  onStartResize: (e: React.MouseEvent, item: ImageAnnotation, handle: ResizeHandleType) => void;
+  onStartDrag: (e: React.MouseEvent | React.TouchEvent, item: ImageAnnotation) => void;
+  onStartResize: (e: React.MouseEvent | React.TouchEvent, item: ImageAnnotation, handle: ResizeHandleType) => void;
 }
 
 export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
@@ -39,6 +39,12 @@ export const ImageAnnotationLayer: React.FC<ImageAnnotationLayerProps> = ({
           <div
             key={img.id}
             onMouseDown={(e) => {
+              if (toolMode === 'pan' || toolMode === 'selectText') return;
+              e.stopPropagation();
+              onSelectImage(img.id);
+              onStartDrag(e, img);
+            }}
+            onTouchStart={(e) => {
               if (toolMode === 'pan' || toolMode === 'selectText') return;
               e.stopPropagation();
               onSelectImage(img.id);
