@@ -31,7 +31,7 @@ export const LeftSidebarStrip: React.FC<LeftSidebarStripProps> = ({
   onToggleTab,
 }) => {
   return (
-    <aside className="w-11 bg-[#f8f9fa] dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center justify-between py-3 select-none z-20 shrink-0 transition-colors">
+    <aside className="hidden md:flex w-11 bg-[#f8f9fa] dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col items-center justify-between py-3 select-none z-20 shrink-0 transition-colors">
       {/* Top Icons */}
       <div className="flex flex-col items-center gap-2">
         {/* Thumbnails / Pages toggle */}

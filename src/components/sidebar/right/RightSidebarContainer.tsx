@@ -112,7 +112,12 @@ export const RightSidebarContainer: React.FC<RightSidebarContainerProps> = ({
   if (!isOpen || !activeTab) return null;
 
   return (
-    <aside className="w-72 md:w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col h-full z-20 shadow-lg shrink-0 transition-colors animate-in slide-in-from-right-4 duration-150">
+    <>
+      <div 
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-150"
+        onClick={onClose}
+      />
+      <aside className="fixed inset-y-0 right-0 z-50 w-72 sm:w-80 lg:relative lg:w-80 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col h-full shadow-2xl lg:shadow-lg shrink-0 transition-colors animate-in slide-in-from-right duration-200">
       {activeTab === 'inspector' && (
         <InspectorPanel
           hasDocument={hasDocument}
@@ -185,6 +190,7 @@ export const RightSidebarContainer: React.FC<RightSidebarContainerProps> = ({
         />
       )}
     </aside>
+    </>
   );
 };
 

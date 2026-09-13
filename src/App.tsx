@@ -38,12 +38,17 @@ import { EncryptModal } from './components/modals/EncryptModal';
 import { DecryptModal } from './components/modals/DecryptModal';
 import { MetadataModal } from './components/modals/MetadataModal';
 import { CompressModal } from './components/modals/CompressModal';
+import { MobileToolsModal } from './components/modals/MobileToolsModal';
+import { MobileBottomBar } from './components/layout/MobileBottomBar';
+import { useResponsive } from './hooks/useResponsive';
 import { encryptPDF } from '@pdfsmaller/pdf-encrypt';
 import { decryptPDF, isEncrypted as checkIsPdfEncrypted } from '@pdfsmaller/pdf-decrypt';
 import { AppSettings, DEFAULT_APP_SETTINGS, SETTINGS_STORAGE_KEY, PAPER_SIZES } from './types/settings';
 import { t } from './i18n/translations';
 
 export const App: React.FC = () => {
+  const { isMobile, isTablet } = useResponsive();
+  const [isMobileToolsOpen, setIsMobileToolsOpen] = useState<boolean>(false);
   // Document State
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -826,6 +831,15 @@ export const App: React.FC = () => {
   const handleZoomIn = () => setZoom((z) => Math.min(2.5, Number((z + 0.15).toFixed(2))));
   const handleZoomOut = () => setZoom((z) => Math.max(0.5, Number((z - 0.15).toFixed(2))));
   const handleResetZoom = () => setZoom(1.0);
+  const handleFitWidth = useCallback(() => {
+    if (!pages[currentPageIndex]) return;
+    const pageWidth = pages[currentPageIndex].width || 595;
+    const containerWidth = window.innerWidth < 768 
+      ? window.innerWidth - 16 
+      : window.innerWidth - (leftSidebarTab ? 350 : 100);
+    const fitScale = Math.min(2.5, Math.max(0.3, Number((containerWidth / pageWidth).toFixed(2))));
+    setZoom(fitScale);
+  }, [pages, currentPageIndex, leftSidebarTab]);
 
   // Export PDF with all edits
   const handleExportPdf = async () => {
@@ -1453,6 +1467,7 @@ export const App: React.FC = () => {
         isDarkEffective={isDarkEffective}
         onToggleDarkMode={handleToggleDarkMode}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenMobileTools={() => setIsMobileToolsOpen(true)}
       />
 
       {/* Top Office / Lyncub PDF Ribbon Header */}
@@ -1585,6 +1600,7 @@ export const App: React.FC = () => {
               currentPageIndex={currentPageIndex}
               pages={pages}
               zoom={zoom}
+              onZoomChange={setZoom}
               toolMode={toolMode}
               fontFamily={fontFamily}
               fontSize={fontSize}
@@ -1957,6 +1973,45 @@ export const App: React.FC = () => {
         title={alertConfig.title}
         message={alertConfig.message}
         type={alertConfig.type}
+      />
+
+      {/* Mobile Bottom Navigation Bar (< 768px) */}
+      <MobileBottomBar
+        hasDocument={!!pdfDoc}
+        currentPageIndex={currentPageIndex}
+        totalPages={pages.length}
+        toolMode={toolMode}
+        onSelectTool={handleSelectTool}
+        onOpenThumbnails={() => setLeftSidebarTab((prev) => (prev === 'thumbnails' ? null : 'thumbnails'))}
+        onFitWidth={handleFitWidth}
+        onSavePdf={handleExportPdf}
+        onOpenMoreMenu={() => setIsMobileToolsOpen(true)}
+        onPrevPage={() => setCurrentPageIndex((p) => Math.max(0, p - 1))}
+        onNextPage={() => setCurrentPageIndex((p) => Math.min(pages.length - 1, p + 1))}
+        language={settings.language}
+      />
+
+      {/* Mobile Tools Modal / Bottom Sheet */}
+      <MobileToolsModal
+        isOpen={isMobileToolsOpen}
+        onClose={() => setIsMobileToolsOpen(false)}
+        onOpenMerge={() => setIsMergeOpen(true)}
+        onOpenSplit={() => setIsSplitOpen(true)}
+        onOpenSignature={() => setIsSignatureOpen(true)}
+        onOpenCompress={() => setIsCompressModalOpen(true)}
+        onOpenEncrypt={() => setIsEncryptOpen(true)}
+        onOpenDecrypt={() => setIsDecryptOpen(true)}
+        onToggleSearch={handleToggleSearch}
+        onOpenHistory={() => setRightSidebarTab('history')}
+        onAddImage={handleAddImage}
+        onAddBlankPage={handleAddBlankPage}
+        onReversePages={handleReversePages}
+        onRotateLeft={() => handleRotateCurrentPage(-90)}
+        onRotateRight={() => handleRotateCurrentPage(90)}
+        onPrint={handlePrint}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenAbout={() => setIsAboutOpen(true)}
+        language={settings.language}
       />
     </div>
   );

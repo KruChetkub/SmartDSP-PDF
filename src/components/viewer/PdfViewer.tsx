@@ -78,6 +78,7 @@ interface PdfViewerProps {
   snapshotDpi?: SnapshotDpi;
   disableLatinSpacing?: boolean;
   language?: AppLanguage;
+  onZoomChange?: (newZoom: number) => void;
 }
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({
@@ -119,13 +120,63 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   snapshotDpi = 150,
   disableLatinSpacing = false,
   language = 'th',
+  onZoomChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Pan scroll hook
-  const { scrollContainerRef, isPanning, handlePanMouseDown } = usePanScroll(toolMode);
+  const { scrollContainerRef, isPanning, handlePanMouseDown, handlePanTouchStart } = usePanScroll(toolMode);
+
+  // Touch Pinch-to-zoom support
+  const touchPinchRef = useRef<{ initialDistance: number; initialZoom: number } | null>(null);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el || !onZoomChange) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        touchPinchRef.current = { initialDistance: dist, initialZoom: zoom };
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && touchPinchRef.current) {
+        e.preventDefault();
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        if (touchPinchRef.current.initialDistance > 0) {
+          const factor = dist / touchPinchRef.current.initialDistance;
+          const newZoom = Math.min(2.5, Math.max(0.4, Number((touchPinchRef.current.initialZoom * factor).toFixed(2))));
+          onZoomChange(newZoom);
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      touchPinchRef.current = null;
+    };
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    el.addEventListener('touchend', handleTouchEnd);
+    el.addEventListener('touchcancel', handleTouchEnd);
+
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [zoom, onZoomChange]);
 
   // Drag moving & 8-point resizing hook
   const { setDragItem, setResizeItem } = useAnnotationInteraction({
@@ -542,7 +593,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   return (
     <div 
       ref={scrollContainerRef}
-      className={`flex-1 overflow-auto bg-slate-200/80 dark:bg-slate-950 p-8 flex justify-center items-start transition-colors ${
+      className={`flex-1 overflow-auto bg-slate-200/80 dark:bg-slate-950 p-2 sm:p-4 md:p-8 pb-24 md:pb-8 flex justify-center items-start transition-colors ${
         toolMode === 'pan'
           ? isPanning
             ? 'cursor-grabbing select-none'
@@ -566,6 +617,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           setEditingExtractedId(null);
           setEditingShapeId(null);
         }
+      }}
+      onTouchStart={(e) => {
+        handlePanTouchStart(e);
       }}
     >
       <div

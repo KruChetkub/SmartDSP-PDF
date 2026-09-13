@@ -198,7 +198,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
   ];
 
   return (
-    <header className="bg-[#f8f9fa] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 select-none shadow-xs z-30 transition-colors">
+    <header className="z-30 transition-colors">
       {/* Hidden File Inputs */}
       <input
         type="file"
@@ -215,8 +215,9 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
         className="hidden"
       />
 
-      {/* Row 1: Ribbon Tab Bar */}
-      <div className="flex items-center justify-between px-3 pt-1 border-b border-slate-200/80 dark:border-slate-800 bg-[#f8f9fa] dark:bg-slate-900">
+      <div className="hidden md:block bg-[#f8f9fa] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 select-none shadow-xs">
+        {/* Row 1: Ribbon Tab Bar */}
+        <div className="flex items-center justify-between px-3 pt-1 border-b border-slate-200/80 dark:border-slate-800 bg-[#f8f9fa] dark:bg-slate-900">
         <div className="flex items-center gap-1 overflow-x-auto overflow-y-hidden no-scrollbar">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -1020,6 +1021,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
             </span>
           </div>
         )}
+      </div>
       </div>
     </header>
   );

@@ -40,10 +40,15 @@ export const BookmarksSidebar: React.FC<BookmarksSidebarProps> = ({
   };
 
   return (
-    <aside className="w-56 bg-white border-r border-slate-200 flex flex-col z-20 select-none">
-      {/* Header */}
-      <div className="h-10 px-3 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
-        <span className="font-semibold text-slate-800 text-sm">บุ๊กมาร์ก</span>
+    <>
+      <div 
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-150"
+        onClick={onClose}
+      />
+      <aside className="fixed inset-y-0 left-0 z-50 w-72 lg:relative lg:w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col select-none shadow-2xl lg:shadow-none animate-in slide-in-from-left duration-200">
+        {/* Header */}
+        <div className="h-10 px-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
+          <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">บุ๊กมาร์ก</span>
         <button
           type="button"
           onClick={onClose}
@@ -65,11 +70,16 @@ export const BookmarksSidebar: React.FC<BookmarksSidebarProps> = ({
               return (
                 <div
                   key={bm.id}
-                  onClick={() => onSelectPage(bm.pageIndex)}
+                  onClick={() => {
+                    onSelectPage(bm.pageIndex);
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                      onClose();
+                    }
+                  }}
                   className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs cursor-pointer transition-colors ${
                     isActive
-                      ? 'bg-pink-50 text-pink-700 font-medium border border-pink-200'
-                      : 'text-slate-700 hover:bg-slate-100'
+                      ? 'bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 font-medium border border-pink-200 dark:border-pink-800'
+                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
@@ -150,6 +160,7 @@ export const BookmarksSidebar: React.FC<BookmarksSidebarProps> = ({
         )}
       </div>
     </aside>
+    </>
   );
 };
 

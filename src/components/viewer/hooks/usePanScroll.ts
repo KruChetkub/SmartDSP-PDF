@@ -29,6 +29,18 @@ export const usePanScroll = (toolMode: ToolMode) => {
     return true;
   };
 
+  const handlePanTouchStart = (e: React.TouchEvent<HTMLDivElement>): boolean => {
+    if (toolMode !== 'pan' || e.touches.length !== 1) return false;
+    setIsPanning(true);
+    panStartRef.current = {
+      mouseX: e.touches[0].clientX,
+      mouseY: e.touches[0].clientY,
+      scrollLeft: scrollContainerRef.current?.scrollLeft || 0,
+      scrollTop: scrollContainerRef.current?.scrollTop || 0,
+    };
+    return true;
+  };
+
   useEffect(() => {
     if (!isPanning) return;
 
@@ -40,6 +52,14 @@ export const usePanScroll = (toolMode: ToolMode) => {
       scrollContainerRef.current.scrollTop = panStartRef.current.scrollTop - dy;
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!panStartRef.current || !scrollContainerRef.current || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - panStartRef.current.mouseX;
+      const dy = e.touches[0].clientY - panStartRef.current.mouseY;
+      scrollContainerRef.current.scrollLeft = panStartRef.current.scrollLeft - dx;
+      scrollContainerRef.current.scrollTop = panStartRef.current.scrollTop - dy;
+    };
+
     const handlePanUp = () => {
       setIsPanning(false);
       panStartRef.current = null;
@@ -47,10 +67,16 @@ export const usePanScroll = (toolMode: ToolMode) => {
 
     window.addEventListener('mousemove', handlePanMove);
     window.addEventListener('mouseup', handlePanUp);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handlePanUp);
+    window.addEventListener('touchcancel', handlePanUp);
 
     return () => {
       window.removeEventListener('mousemove', handlePanMove);
       window.removeEventListener('mouseup', handlePanUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handlePanUp);
+      window.removeEventListener('touchcancel', handlePanUp);
     };
   }, [isPanning]);
 
@@ -58,6 +84,7 @@ export const usePanScroll = (toolMode: ToolMode) => {
     scrollContainerRef,
     isPanning,
     handlePanMouseDown,
+    handlePanTouchStart,
   };
 };
 

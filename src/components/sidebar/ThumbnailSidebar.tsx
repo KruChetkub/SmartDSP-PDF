@@ -217,8 +217,14 @@ export const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
   };
 
   return (
-    <aside className="w-64 bg-slate-50/80 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-20 select-none transition-colors">
-      {/* Hidden PDF file input for inserting PDF */}
+    <>
+      {/* Backdrop for Mobile & Tablet */}
+      <div 
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden animate-in fade-in duration-150"
+        onClick={onToggleOpen}
+      />
+      <aside className="fixed inset-y-0 left-0 z-50 w-72 sm:w-80 lg:relative lg:w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col select-none transition-all shadow-2xl lg:shadow-none animate-in slide-in-from-left duration-200">
+        {/* Hidden PDF file input for inserting PDF */}
       <input
         type="file"
         ref={insertPdfInputRef}
@@ -285,7 +291,12 @@ export const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
                 onDragEnd={handleDragEnd}
-                onClick={() => onSelectPage(index)}
+                onClick={() => {
+                  onSelectPage(index);
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                    onToggleOpen();
+                  }
+                }}
                 onContextMenu={(e) => handleContextMenu(e, index)}
                 className={`group relative flex items-center gap-2.5 p-2 rounded-2xl transition-all cursor-grab active:cursor-grabbing border select-none ${
                   isBeingDragged
@@ -503,5 +514,6 @@ export const ThumbnailSidebar: React.FC<ThumbnailSidebarProps> = ({
         </div>
       )}
     </aside>
+    </>
   );
 };

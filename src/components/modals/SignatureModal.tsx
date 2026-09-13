@@ -107,26 +107,43 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
     }
   }, [strokes, currentStroke, redrawCanvas, activeTab]);
 
-  // Drawing event handlers
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Drawing event handlers with scaled coordinates for mobile & responsive canvas
+  const getCanvasCoordinates = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / (rect.width || 1);
+    const scaleY = canvas.height / (rect.height || 1);
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
     setIsDrawing(true);
     setCurrentStroke([{ x, y }]);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
+    setCurrentStroke((prev) => [...prev, { x, y }]);
+  };
 
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
+    setIsDrawing(true);
+    setCurrentStroke([{ x, y }]);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
     setCurrentStroke((prev) => [...prev, { x, y }]);
   };
 
@@ -310,8 +327,8 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
     (activeTab === 'upload' && !uploadedImage);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-xl overflow-hidden flex flex-col transition-colors">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-xl max-h-[92vh] overflow-y-auto flex flex-col transition-colors">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -451,7 +468,10 @@ export const SignatureModal: React.FC<SignatureModalProps> = ({
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
-                  className="w-full h-44 cursor-crosshair block"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleMouseUp}
+                  className="w-full h-44 cursor-crosshair block touch-none select-none"
                 />
                 {strokes.length === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-xs text-slate-400 dark:text-slate-600 select-none">
