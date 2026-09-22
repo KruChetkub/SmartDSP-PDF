@@ -46,6 +46,11 @@ export const AttachmentsSidebar: React.FC<AttachmentsSidebarProps> = ({
     // Only navigate to an object URL created from attachment bytes. Never put
     // attachment-controlled text into an anchor href (for example, javascript:).
     const objectUrl = URL.createObjectURL(blob);
+    if (!objectUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(objectUrl);
+      return;
+    }
+
     const a = document.createElement('a');
     a.href = objectUrl;
     a.download = att.filename;
