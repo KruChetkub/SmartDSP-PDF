@@ -36,26 +36,17 @@ export const AttachmentsSidebar: React.FC<AttachmentsSidebarProps> = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleDownload = (att: AttachmentItem) => {
+  const handleDownload = async (att: AttachmentItem) => {
     const blob = att.dataBlob
       ?? (att.dataBytes
         ? new Blob([att.dataBytes as unknown as BlobPart])
         : undefined);
     if (!blob) return;
 
-    // Only navigate to an object URL created from attachment bytes. Never put
-    // attachment-controlled text into an anchor href (for example, javascript:).
-    const objectUrl = URL.createObjectURL(blob);
-    if (!objectUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(objectUrl);
-      return;
-    }
-
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = att.filename;
-    a.click();
-    URL.revokeObjectURL(objectUrl);
+    // Keep attachment-controlled data away from DOM URL sinks in application
+    // code. PDF.js owns the browser-specific download implementation.
+    const { DownloadManager } = await import('pdfjs-dist/web/pdf_viewer');
+    new DownloadManager().download(blob, '', att.filename, undefined);
   };
 
   return (
