@@ -4,7 +4,7 @@
 // TopHeaderBar.tsx - Top branding and window status bar with SmartDSP PDF logo, dark mode toggle, and settings trigger
 
 import React from 'react';
-import { Moon, Sun, Settings, LayoutGrid } from 'lucide-react';
+import { HelpCircle, Moon, Sun, Settings, LayoutGrid } from 'lucide-react';
 import { AppLanguage, AppTheme } from '../../types/settings';
 import { t } from '../../i18n/translations';
 
@@ -17,6 +17,7 @@ interface TopHeaderBarProps {
   onToggleDarkMode: () => void;
   onOpenSettings: () => void;
   onOpenMobileTools?: () => void;
+  onStartTour?: () => void;
 }
 
 export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({
@@ -27,7 +28,10 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({
   onToggleDarkMode,
   onOpenSettings,
   onOpenMobileTools,
+  onStartTour,
 }) => {
+  const tourLabel = language === 'th' ? 'แนะนำการใช้งาน' : 'Product tour';
+
   return (
     <div className="relative z-40 h-11 px-2.5 sm:px-3 bg-[#fbfbfb] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between select-none transition-colors">
       {/* Left: Logo & Branding */}
@@ -75,6 +79,18 @@ export const TopHeaderBar: React.FC<TopHeaderBarProps> = ({
             title="เครื่องมือทั้งหมด"
           >
             <LayoutGrid className="w-4 h-4" />
+          </button>
+        )}
+
+        {onStartTour && (
+          <button
+            type="button"
+            onClick={onStartTour}
+            className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:border-pink-300 hover:bg-pink-50 hover:text-pink-600 dark:hover:border-pink-800 dark:hover:bg-pink-950/40 dark:hover:text-pink-400 active:scale-95 transition-all shadow-2xs cursor-pointer"
+            title={tourLabel}
+            aria-label={tourLabel}
+          >
+            <HelpCircle className="w-4 h-4" />
           </button>
         )}
 

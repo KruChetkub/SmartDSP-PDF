@@ -17,7 +17,7 @@ import { PDFDocument } from 'pdf-lib';
 import { PdfRenderService } from './services/pdfRenderService';
 import { PdfService } from './services/pdfService';
 import { TopHeaderBar } from './components/layout/TopHeaderBar';
-import { RibbonHeader } from './components/layout/RibbonHeader';
+import { RibbonHeader, type RibbonTabType } from './components/layout/RibbonHeader';
 import { LeftSidebarStrip, LeftSidebarTab } from './components/layout/LeftSidebarStrip';
 import { RightSidebarStrip } from './components/layout/RightSidebarStrip';
 import { ThumbnailSidebar } from './components/sidebar/ThumbnailSidebar';
@@ -46,10 +46,13 @@ import { encryptPDF } from '@pdfsmaller/pdf-encrypt';
 import { decryptPDF, isEncrypted as checkIsPdfEncrypted } from '@pdfsmaller/pdf-decrypt';
 import { AppSettings, DEFAULT_APP_SETTINGS, SETTINGS_STORAGE_KEY, PAPER_SIZES } from './types/settings';
 import { t } from './i18n/translations';
+import { GuidedTour, useGuidedTour } from './features/onboarding';
 
 export const App: React.FC = () => {
   const { isMobile, isTablet } = useResponsive();
   const [isMobileToolsOpen, setIsMobileToolsOpen] = useState<boolean>(false);
+  const [activeRibbonTab, setActiveRibbonTab] = useState<RibbonTabType>('home');
+  const { isTourOpen, startTour, closeTour } = useGuidedTour();
   // Document State
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -1552,6 +1555,7 @@ export const App: React.FC = () => {
         onToggleDarkMode={handleToggleDarkMode}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenMobileTools={() => setIsMobileToolsOpen(true)}
+        onStartTour={startTour}
       />
 
       {/* Top Office / Lyncub PDF Ribbon Header */}
@@ -1560,6 +1564,8 @@ export const App: React.FC = () => {
         hasDocument={!!pdfDoc}
         toolMode={toolMode}
         language={settings.language}
+        activeTab={activeRibbonTab}
+        onActiveTabChange={setActiveRibbonTab}
         onSelectTool={handleSelectTool}
         onOpenFile={handleOpenFile}
         onNewFile={handleNewFile}
@@ -1595,6 +1601,13 @@ export const App: React.FC = () => {
         onOpenSignatureModal={() => setIsSignatureOpen(true)}
         onOpenMetadataModal={() => setIsMetadataModalOpen(true)}
         onOpenCompressModal={() => setIsCompressModalOpen(true)}
+      />
+
+      <GuidedTour
+        isOpen={isTourOpen}
+        language={settings.language}
+        onClose={closeTour}
+        onTabChange={setActiveRibbonTab}
       />
 
       {/* Main Workspace Area with Left Strip, Thumbnail Panel, Center PDF Viewer, Right Property Panel, Right Strip */}

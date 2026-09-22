@@ -3,7 +3,7 @@
 // OpenJPDF - PDF Editor (Web)
 // RibbonHeader.tsx - Office/Lyncub PDF style Top Ribbon Header
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Undo2, 
   Redo2, 
@@ -51,81 +51,20 @@ import {
   Info,
   Minimize2
 } from 'lucide-react';
-import { ToolMode } from '../../types';
-import { AppLanguage } from '../../types/settings';
 import { t } from '../../i18n/translations';
+import type { RibbonHeaderProps, RibbonTabType } from './ribbon/ribbonTypes';
+import { getRibbonTabs } from './ribbon/ribbonTabs';
+import { useRibbonFileInputs } from './ribbon/useRibbonFileInputs';
 
-export type RibbonTabType = 
-  | 'home' 
-  | 'edit' 
-  | 'comment' 
-  | 'view' 
-  | 'forms' 
-  | 'security' 
-  | 'review'
-  | 'tools';
-
-interface RibbonHeaderProps {
-  fileName: string;
-  hasDocument: boolean;
-  toolMode: ToolMode;
-  language?: AppLanguage;
-  onSelectTool: (mode: ToolMode) => void;
-  
-  // File operations
-  onOpenFile: (file: File) => void;
-  onNewFile: () => void;
-  onSavePdf: () => void;
-  onSaveAsPdf: () => void;
-  onPrint: () => void;
-  onExportPdf: () => void;
-  isExporting: boolean;
-
-  // Zoom operations
-  zoom: number;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onResetZoom: () => void;
-
-  // Edit / Page operations
-  onAddImage: (file: File) => void;
-  onOpenMergeModal: () => void;
-  onOpenSplitModal: () => void;
-  onRotateLeft: () => void;
-  onRotateRight: () => void;
-  onDuplicatePage: () => void;
-  onDeletePage: () => void;
-  onAddBlankPage: () => void;
-  onReversePages: () => void;
-  onTogglePresentation: () => void;
-  onClearAnnotations: () => void;
-  onAddCommentItem?: (type: 'rect' | 'circle' | 'ellipse' | 'line' | 'arrow' | 'stamp' | 'note' | 'highlight' | 'underline' | 'strikethrough') => void;
-  isSearchOpen?: boolean;
-  onToggleSearch?: () => void;
-
-  // AI & Modals
-  onOpenToolbox: () => void;
-  onOpenAboutModal: () => void;
-
-  // Security Operations
-  onMarkRedaction?: () => void;
-  onApplyRedaction?: () => void;
-  onOpenEncryptModal?: () => void;
-  onOpenDecryptModal?: () => void;
-  onOpenSignatureModal?: () => void;
-
-  // Review Operations
-  onOpenMetadataModal?: () => void;
-
-  // Tools Operations
-  onOpenCompressModal?: () => void;
-}
+export type { RibbonTabType } from './ribbon/ribbonTypes';
 
 export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
   fileName,
   hasDocument,
   toolMode,
   language = 'th',
+  activeTab: controlledActiveTab,
+  onActiveTabChange,
   onSelectTool,
   onOpenFile,
   onNewFile,
@@ -162,40 +101,21 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
   onOpenMetadataModal,
   onOpenCompressModal,
 }) => {
-  const [activeTab, setActiveTab] = useState<RibbonTabType>('home');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [internalActiveTab, setInternalActiveTab] = useState<RibbonTabType>('home');
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+  const {
+    fileInputRef,
+    imageInputRef,
+    handleFileInputChange,
+    handleImageInputChange,
+  } = useRibbonFileInputs(onOpenFile, onAddImage);
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      onOpenFile(files[0]);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const handleTabChange = (tab: RibbonTabType) => {
+    setInternalActiveTab(tab);
+    onActiveTabChange?.(tab);
   };
 
-  const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      onAddImage(files[0]);
-    }
-    if (imageInputRef.current) {
-      imageInputRef.current.value = '';
-    }
-  };
-
-  const tabs: { id: RibbonTabType; label: string }[] = [
-    { id: 'home', label: t('tabHome', language) },
-    { id: 'edit', label: t('tabEdit', language) },
-    { id: 'comment', label: t('tabComment', language) },
-    { id: 'view', label: t('tabView', language) },
-    { id: 'forms', label: t('tabForms', language) },
-    { id: 'security', label: t('tabSecurity', language) },
-    { id: 'review', label: t('tabReview', language) },
-    { id: 'tools', label: t('tabTools', language) },
-  ];
+  const tabs = getRibbonTabs(language);
 
   return (
     <header className="z-30 transition-colors">
@@ -218,13 +138,17 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
       <div className="hidden md:block bg-[#f8f9fa] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 select-none shadow-xs">
         {/* Row 1: Ribbon Tab Bar */}
         <div className="flex items-center justify-between px-3 pt-1 border-b border-slate-200/80 dark:border-slate-800 bg-[#f8f9fa] dark:bg-slate-900">
-        <div className="flex items-center gap-1 overflow-x-auto overflow-y-hidden no-scrollbar">
+        <div className="flex items-center gap-1 overflow-x-auto overflow-y-hidden no-scrollbar" role="tablist">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                type="button"
+                role="tab"
+                data-tour-id={`ribbon-tab-${tab.id}`}
+                onClick={() => handleTabChange(tab.id)}
+                aria-selected={isActive}
                 className={`px-3.5 py-1.5 text-xs font-medium rounded-t-md transition-colors relative cursor-pointer ${
                   isActive
                     ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-t-2 border-l border-r border-t-transparent border-slate-200 dark:border-slate-700 shadow-xs font-semibold'
@@ -291,6 +215,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* สร้างใหม่ - Always enabled */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-new"
                   onClick={onNewFile}
                   className="flex flex-col items-center justify-center w-12 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                   title={t('newFile', language)}
@@ -302,6 +227,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* เปิด - Always enabled */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-open"
                   onClick={() => fileInputRef.current?.click()}
                   className="flex flex-col items-center justify-center w-12 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                   title={t('openFile', language)}
@@ -313,6 +239,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* บันทึก */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-save"
                   onClick={onSavePdf}
                   disabled={!hasDocument || isExporting}
                   className="flex flex-col items-center justify-center w-12 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-lg transition-colors cursor-pointer"
@@ -325,6 +252,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* บันทึกเป็น */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-save-as"
                   onClick={onSaveAsPdf}
                   disabled={!hasDocument || isExporting}
                   className="flex flex-col items-center justify-center w-13 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-lg transition-colors cursor-pointer"
@@ -337,6 +265,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* พิมพ์ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-print"
                   onClick={onPrint}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center w-12 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-lg transition-colors cursor-pointer"
@@ -349,6 +278,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ส่งออก */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-export"
                   onClick={onExportPdf}
                   disabled={!hasDocument || isExporting}
                   className="flex flex-col items-center justify-center w-12 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-lg transition-colors cursor-pointer"
@@ -370,6 +300,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* เลือก */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-select"
                   onClick={() => onSelectTool('select')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-3 h-11 rounded-2xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -388,6 +319,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* เลื่อนหน้า (Hand tool) */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-pan"
                   onClick={() => onSelectTool('pan')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2.5 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -404,6 +336,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* เลือกข้อความ (Select Text) */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-select-text"
                   onClick={() => onSelectTool('selectText')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -420,6 +353,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* สแนปช็อต (Snapshot) */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-snapshot"
                   onClick={() => onSelectTool('snapshot')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -436,6 +370,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ค้นหา (Search) */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-search"
                   onClick={onToggleSearch}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -452,6 +387,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ขยาย (Zoom in) */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-zoom-in"
                   onClick={onZoomIn}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -464,6 +400,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ย่อ (Zoom out) */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-home-zoom-out"
                   onClick={onZoomOut}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -487,6 +424,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* แก้ไขข้อความ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-edit-text"
                   onClick={() => onSelectTool('editText')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-3 h-11 rounded-2xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -505,6 +443,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* เพิ่มข้อความ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-add-text"
                   onClick={() => onSelectTool('text')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-3 h-11 rounded-2xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -523,6 +462,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* แทรกรูปภาพ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-insert-image"
                   onClick={() => {
                     if (hasDocument) imageInputRef.current?.click();
                   }}
@@ -546,6 +486,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* หมุนซ้าย */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-rotate-left"
                   onClick={onRotateLeft}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2.5 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -558,6 +499,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* หมุนขวา */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-rotate-right"
                   onClick={onRotateRight}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2.5 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -570,6 +512,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ทำซ้ำ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-duplicate-page"
                   onClick={onDuplicatePage}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2.5 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -582,6 +525,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ลบ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-delete-page"
                   onClick={onDeletePage}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2.5 h-11 text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -594,6 +538,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* เพิ่มหน้าว่าง */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-blank-page"
                   onClick={onAddBlankPage}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2.5 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -606,6 +551,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* กลับลำดับหน้า */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-edit-reverse-pages"
                   onClick={onReversePages}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-2.5 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -629,6 +575,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* โน้ต */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-note"
                   onClick={() => onAddCommentItem ? onAddCommentItem('note') : onSelectTool('note')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-3 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -647,6 +594,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ไฮไลต์ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-highlight"
                   onClick={() => onAddCommentItem ? onAddCommentItem('highlight') : onSelectTool('highlight')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-3 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -665,6 +613,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ขีดเส้นใต้ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-underline"
                   onClick={() => onAddCommentItem ? onAddCommentItem('underline') : onSelectTool('underline')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2.5 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -683,6 +632,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ขีดฆ่า */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-strikethrough"
                   onClick={() => onAddCommentItem ? onAddCommentItem('strikethrough') : onSelectTool('strikethrough')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-3 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -710,6 +660,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* สี่เหลี่ยม */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-rectangle"
                   onClick={() => onAddCommentItem ? onAddCommentItem('rect') : onSelectTool('rect')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2.5 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -728,6 +679,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* วงกลม */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-circle"
                   onClick={() => onAddCommentItem ? onAddCommentItem('circle') : onSelectTool('circle')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2.5 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -746,6 +698,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* วงรี */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-ellipse"
                   onClick={() => onAddCommentItem ? onAddCommentItem('ellipse') : onSelectTool('ellipse')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2.5 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -774,6 +727,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ลูกศร */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-arrow"
                   onClick={() => onAddCommentItem ? onAddCommentItem('arrow') : onSelectTool('arrow')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2.5 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -792,6 +746,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ตราประทับ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-stamp"
                   onClick={() => onAddCommentItem ? onAddCommentItem('stamp') : onSelectTool('stamp')}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-2.5 h-11 rounded-xl transition-all cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -819,6 +774,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ลบคำอธิบายประกอบ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-comment-clear-all"
                   onClick={onClearAnnotations}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-3 h-11 rounded-xl transition-all cursor-pointer text-slate-700 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 border border-transparent disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-700"
@@ -842,6 +798,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
               <div className="flex items-center gap-1.5 my-auto">
                 <button
                   type="button"
+                  data-tour-id="tour-tool-view-actual-size"
                   onClick={onResetZoom}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -852,6 +809,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 </button>
                 <button
                   type="button"
+                  data-tour-id="tour-tool-view-presentation"
                   onClick={onTogglePresentation}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -875,6 +833,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ทำเครื่องหมาย */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-security-mark-redaction"
                   onClick={onMarkRedaction}
                   disabled={!hasDocument}
                   className={`flex flex-col items-center justify-center px-3 h-11 rounded-xl transition-colors cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent ${
@@ -893,6 +852,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ใช้ */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-security-apply-redaction"
                   onClick={onApplyRedaction}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -918,6 +878,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* เข้ารหัส */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-security-encrypt"
                   onClick={onOpenEncryptModal}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -932,6 +893,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
                 {/* ถอดรหัส */}
                 <button
                   type="button"
+                  data-tour-id="tour-tool-security-decrypt"
                   onClick={onOpenDecryptModal}
                   disabled={!hasDocument}
                   className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -957,6 +919,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
               {/* ดูข้อมูลเมทาดาทา */}
               <button
                 type="button"
+                data-tour-id="tour-tool-review-metadata"
                 onClick={onOpenMetadataModal}
                 disabled={!hasDocument}
                 className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -981,6 +944,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
               {/* ลดขนาดไฟล์ PDF */}
               <button
                 type="button"
+                data-tour-id="tour-tool-tools-compress"
                 onClick={onOpenCompressModal}
                 disabled={!hasDocument}
                 className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
@@ -1005,6 +969,7 @@ export const RibbonHeader: React.FC<RibbonHeaderProps> = ({
               {/* ลายเซ็น */}
               <button
                 type="button"
+                data-tour-id="tour-tool-forms-signature"
                 onClick={onOpenSignatureModal}
                 disabled={!hasDocument}
                 className="flex flex-col items-center justify-center px-3 h-11 text-slate-700 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-xl transition-colors cursor-pointer"
