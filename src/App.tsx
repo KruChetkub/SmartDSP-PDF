@@ -1667,7 +1667,7 @@ export const App: React.FC = () => {
                       id: `att-${Date.now()}`,
                       filename: file.name,
                       size: file.size,
-                      dataUrl: URL.createObjectURL(file),
+                      dataBlob: file,
                     },
                   ]);
                 }}

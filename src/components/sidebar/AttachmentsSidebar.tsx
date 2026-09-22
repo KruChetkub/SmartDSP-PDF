@@ -10,7 +10,7 @@ export interface AttachmentItem {
   id: string;
   filename: string;
   size?: number;
-  dataUrl?: string;
+  dataBlob?: Blob;
   dataBytes?: Uint8Array;
 }
 
@@ -37,20 +37,20 @@ export const AttachmentsSidebar: React.FC<AttachmentsSidebarProps> = ({
   };
 
   const handleDownload = (att: AttachmentItem) => {
-    let url = att.dataUrl;
-    let shouldRevoke = false;
-    if (!url && att.dataBytes) {
-      const blob = new Blob([att.dataBytes as unknown as BlobPart]);
-      url = URL.createObjectURL(blob);
-      shouldRevoke = true;
-    }
-    if (url) {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = att.filename;
-      a.click();
-      if (shouldRevoke) URL.revokeObjectURL(url);
-    }
+    const blob = att.dataBlob
+      ?? (att.dataBytes
+        ? new Blob([att.dataBytes as unknown as BlobPart])
+        : undefined);
+    if (!blob) return;
+
+    // Only navigate to an object URL created from attachment bytes. Never put
+    // attachment-controlled text into an anchor href (for example, javascript:).
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = att.filename;
+    a.click();
+    URL.revokeObjectURL(objectUrl);
   };
 
   return (
